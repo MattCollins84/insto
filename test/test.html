@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <script type="text/javascript" src="http://127.0.0.1:3000/socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="http://127.0.0.1:3000/lib/client.js"></script>
+    <script type="text/javascript">
+      
+      // specify the user data
+      var userData = {  'userId': 1, 
+                        'firstname': 'Matt', 
+                        'lastName': 'Collins',
+                      };
+      // define a call back                
+      var callback = function(data) {
+        console.log(data);
+      }
+                      
+      //connect to insto
+      var g = new InstoClient(userData, false, callback);
+    </script>
+  </head>
+  <body>
+    
+  </body>
+</html>

@@ -15,9 +15,6 @@ var argv = require('optimist').argv;
 // set the default port
 var port = 3000;
 
-// set the default protocol
-var protocol = "http";
-
 // define the starting number of connection attempts as a global variable
 var conAttempt = 1;
 
@@ -43,11 +40,6 @@ if(typeof port!= 'number' || port<1) {
   console.log("ERROR: The supplied port is not a number");
   console.log("See ./insto.js --help");
   process.exit(1);
-}
-
-// if 'protocol' command-line parameter is present, parse it
-if(argv.protocol) {
-  protocol = argv.protocol;  
 }
 
 // if 'help' command-line parameter is present, parse it
@@ -77,5 +69,5 @@ redisClient.on("connect", function (err) {
 
 });
 
-// start the main application, passing in the port and protocol
-main.startup(port, protocol);
+// start the main application, passing in the port
+main.startup(port);
