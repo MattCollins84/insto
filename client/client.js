@@ -35,5 +35,14 @@ function InstoClient(userData, userQuery, callback, host, protocol) {
    *  Connect to Socket.IO server
    */
   var socket = io.connect(host); //our socket.io object
+  
+  /*
+   *  Handle Socket.IO events
+   */
+  
+  // handle identify
+  socket.on('identify', function(data) {
+    socket.emit('identity', { "userData": userData, "userQuery": userQuery });
+  });
 
 }

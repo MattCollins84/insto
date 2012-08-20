@@ -126,7 +126,30 @@ var startup = function(port) {
    *  On connection, listen for activity
    */
   io.sockets.on('connection', function (socket) {
-    syslog.log('New client connected');
+    syslog.log('New client connected - Socket: '+socket.id);
+    
+    
+    // ask the new connection for its identity
+    syslog.log("New WebSocket connection: asking for identity");
+    socket.emit('identify', {});
+
+    // when we receive identity data
+    socket.on('identity', function(identity) {
+      
+      syslog.log('Received identity');
+      
+      // subscribe to this users pubsub channel in redis
+      redisPubSub.subscribe(socket.id);
+
+      // store user data in redis
+      
+      // store user query in redis
+      
+      // attempt to match user against existing user queries
+
+    });
+    
+    
     
     /*
      *  When a socket disconnects
