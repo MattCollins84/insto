@@ -44,5 +44,45 @@ function InstoClient(userData, userQuery, callback, host, protocol) {
   socket.on('identify', function(data) {
     socket.emit('identity', { "userData": userData, "userQuery": userQuery });
   });
+  
+  // listen for incoming messages and send to callback
+  socket.on('notification', function(msg) {
+    msg._type = "notification";
+    callback(msg);
+  });
+  
+  
+  /*
+   *  Websocket API methods
+   */
+  
+  // websocket API send request
+  this.send = function(query, msg) {
+    
+    if (typeof query != "object") {
+      throw 'Insto: Invalid query object';
+    }
+    
+    //create our object
+    var obj = new Object;
+    obj['_query'] = query;
+    obj['_msg'] = new Object;
+    obj['_msg']['msg'] = msg;
 
+    //send our object
+    socket.emit('api-send', obj);
+    
+  }
+  
+  // broadcast websocket API call
+  this.broadcast = function(msg) {
+    
+    var obj = new Object;
+    obj['_msg'] = new Object;
+    obj['_msg']['msg'] = msg;
+    
+    //send our object
+    socket.emit('api-broadcast', obj);
+    
+  }
 }

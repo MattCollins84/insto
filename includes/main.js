@@ -80,8 +80,41 @@ var startup = function(port) {
 
   });
   
-  // define API calls here
-  
+  /*
+   *  BROADCAST
+   *  Broadcast API method
+   */
+  api.get('/message/all', function(req, res){
+
+    // send broadcast message to all clients
+    syslog.log("Insto: Broadcastmessage sent");
+
+    // use broadcast to send to all sockets
+    user.sendBroadcast(req.query, function(err) { 
+        restSend(res, err);
+    });
+
+  });
+
+  /*
+   *  SEND MESSAGE
+   *  Send message to all matching users
+   */
+  api.get('/message/to/:key/:value', function(req, res) {
+
+    // log the request
+    syslog.log("Insto: send message "+req.route.path);
+    
+    // format query
+    var userQuery = new Object;
+    userQuery[req.params.key] = req.params.value;
+
+    // attempt to send message to specified user of group of users
+    user.sendMessage(userQuery, req.query, function(status) {
+        restSend(res, status);
+    });
+
+  });
   
   /*
    * REDIS
@@ -106,7 +139,28 @@ var startup = function(port) {
     redisPubSub.subscribe(user.redisBroadcastChannel);
   });
   
-  
+  /*
+   *  PUB/SUB
+   *  Message received
+   */
+  redisPubSub.on("message", function (channel, message) {
+
+    // if this a broadcast message
+    if(channel==user.redisBroadcastChannel) {
+      // send this message to all sockets
+      io.sockets.volatile.emit('notification', JSON.parse(message));
+    } 
+    
+    // if targetted at individual user(s)
+    else {
+      
+      // if this socket exists, attempt to send message
+      if(io.sockets.sockets[channel]) {
+        io.sockets.sockets[channel].volatile.emit('notification', JSON.parse(message));      
+      }
+      
+    }
+  });
   
   
   
@@ -138,15 +192,56 @@ var startup = function(port) {
       
       syslog.log('Received identity');
       
+      /*
+       *  SETUP the newly connected user
+       */
+      
       // subscribe to this users pubsub channel in redis
       redisPubSub.subscribe(socket.id);
 
       // store user data in redis
+      if (identity.userData) {
+        // add user to the user array
+        if(user.addUser(identity.userData, socket.id)) {
+          syslog.log("WebSocket: Received identity packet");
+        }
+      }
       
       // store user query in redis
       
       // attempt to match user against existing user queries
 
+    });
+    
+    
+    /*
+     *  Websocket API
+     *  Handle Websocket API requests
+     */
+    
+    
+    // if we receive a websocket API-Send call
+    socket.on('api-send', function(data) {
+    
+      /*
+       *  data must be a JS object in this format
+       *  data['_query']  - query to identify user
+       *  data['_msg']    - a JS object to send to the matched user
+       */
+      syslog.log("Insto: Received send request");
+      user.sendMessage(data['_query'], data['_msg'], function() {});
+    });
+    
+    
+    // if we receive a websocket API-Broadcast call
+    socket.on('api-broadcast', function(data) {
+    
+      /*
+       *  data must be a JS object in this format
+       *  data['_msg']  - a JS object to send to the matched user
+       */
+      syslog.log("Insto: Received broadcast request");
+      user.sendBroadcast(data['_msg'], function() {});
     });
     
     
