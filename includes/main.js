@@ -66,6 +66,14 @@ var startup = function(port) {
     });
   });
   
+  api.get('/test2', function(req, res){
+    fs.readFile("test/test2.html", function (err, data) {
+      // and end the connection with the contents of the static file
+      res.writeHead(200, {'Content-Type': "text/html"});
+      return res.end(data);
+    });
+  });
+  
   /*
    *  CLIENT
    *  Serve out the client-side Websocket API library
@@ -207,7 +215,19 @@ var startup = function(port) {
         }
       }
       
-      // store user query in redis
+      // if this guy has a user query
+      if (identity.userQuery && typeof identity.userQuery == "object") {
+        
+        // save user query to redis
+        user.saveUserQuery(identity.userQuery, socket.id);
+        
+        // try to find matches for this user query from the existing users, and return to this socket
+        user.matchUserQuery(identity.userQuery, socket.id, function(matches) {
+          socket.emit('instousersconnected', matches);
+        });
+
+      }
+      
       
       // attempt to match user against existing user queries
 
@@ -251,6 +271,16 @@ var startup = function(port) {
      */
     socket.on('disconnect', function () {
       syslog.log('User disconnected');
+      
+      // remove this from our array of users
+      user.removeUserBySessionId(this.id);
+
+      // unsubscribe to this pubsub channel, because this socket has gone away
+      redisPubSub.unsubscribe(socket.id);
+      
+      // remove user query
+      user.deleteUserQuery(socket.id);
+      
     });
 
   });

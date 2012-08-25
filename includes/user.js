@@ -127,13 +127,89 @@ var calculateUserQueryMatch = function(query, user) {
   
 }
 
+/*
+ * store user query in redis hash
+ */
+var saveUserQuery = function(query, sessionId) {
+  
+  // add this query to redis
+  redisClient.hset(redisQueryHash, sessionId, JSON.stringify(query) );
+  return true;
+  
+}
+
+/*
+ * remove user query from redis (by session ID)
+ */
+var deleteUserQuery = function(sessionId) {
+  
+  redisClient.hdel(redisQueryHash, sessionId);
+  return true;
+
+}
+
+/*
+ * match and return users that match a user query
+ */
+var matchUserQuery = function(query, socketId, callback) {
+
+  // get the whole user hash from redis
+  redisClient.hgetall(redisUserHash, function (err, obj) {
+    // create users array
+    var users = new Array;
+
+    // iterate through the hash
+    for(sessionId in obj) {
+
+      // parse the JSON
+      var u = JSON.parse(obj[sessionId]);
+    
+      // if we have a query and a sessionId, attempt to match to this
+      if (typeof query == "object" && typeof socketId != "undefined") {
+
+        var match = true;
+
+        // if the users sessionId does not equal the passed in sessionId, attempt a match
+        if (sessionId != socketId) {
+          
+          match = calculateUserQueryMatch(query, u);
+          
+        }
+        
+        // otherwise, this means we are trying to match the same users, so no match
+        else {
+          match = false;
+        }
+        
+        // if we have a match, add this user the returned array
+        if (match) {
+
+          users.push(u);
+          
+        }
+        
+      }
+      
+    }
+    
+    // return any matched users
+    callback(users);    
+    
+  });
+   
+}
+
 module.exports = {
   redisUserHash: redisUserHash,
   redisBroadcastChannel: redisBroadcastChannel,
   redisIndexHash: redisIndexHash,
   redisQueryHash: redisQueryHash,
   addUser: addUser,
+  removeUserBySessionId: removeUserBySessionId,
   getUserBySessionId: getUserBySessionId,
   sendMessage: sendMessage,
-  sendBroadcast: sendBroadcast
+  sendBroadcast: sendBroadcast,
+  saveUserQuery: saveUserQuery,
+  deleteUserQuery: deleteUserQuery,
+  matchUserQuery: matchUserQuery
 }

@@ -51,6 +51,15 @@ function InstoClient(userData, userQuery, callback, host, protocol) {
     callback(msg);
   });
   
+  // listen for incoming connection query matches
+  socket.on('instousersconnected', function(msg) {
+    
+    var obj = new Object;
+    obj._type = "connectedusers"
+    obj.users = msg;
+    callback(obj);
+  });
+  
   
   /*
    *  Websocket API methods
