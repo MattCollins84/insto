@@ -60,6 +60,18 @@ function InstoClient(userData, userQuery, callback, host, protocol) {
     callback(obj);
   });
   
+  // listen for incoming connection query matches
+  socket.on('instoconnect', function(msg) {
+    msg._type = "connect";
+    callback(msg);
+  });
+  
+  // listen for incoming disconnection query matches
+  socket.on('instodisconnect', function(msg) {
+    msg._type = "disconnect";
+    callback(msg);
+  });
+  
   
   /*
    *  Websocket API methods

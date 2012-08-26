@@ -7,9 +7,6 @@ var user = require('./user.js');
 // include the syslog class
 var syslog = require('./syslog.js');
 
-// redis client for publist/subscribe communication
-var redisClient;
-
 // file system module to access system commands
 var fs = require('fs');
 
@@ -229,7 +226,25 @@ var startup = function(port) {
       }
       
       
-      // attempt to match user against existing user queries
+      // now check to see if this user matches any existing queries
+      redisData.hgetall(user.redisQueryHash, function (err, obj) {
+        
+        // loop through the queries
+        for (sessionId in obj) {
+          
+          // get our query object
+          var q = JSON.parse(obj[sessionId]);
+          
+          if (sessionId != socket.id) {
+            // check to see if it matches and send
+            user.matchExistingQuery(q, identity.userData, function() {
+              io.sockets.sockets[sessionId].volatile.emit('instoconnect', identity.userData);
+            });
+          }
+        
+        }
+      
+      });
 
     });
     
@@ -271,6 +286,31 @@ var startup = function(port) {
      */
     socket.on('disconnect', function () {
       syslog.log('User disconnected');
+      
+      //get our userData and send out any matching disconnect messages
+      user.getUserBySessionId(this.id, function(userData) {
+        console.log(userData);
+        // now check to see if this user matches any existing queries
+        redisData.hgetall(user.redisQueryHash, function (err, obj) {
+          
+          // loop through the queries
+          for (sessionId in obj) {
+            
+            // get our query object
+            var q = JSON.parse(obj[sessionId]);
+            
+            if (sessionId != socket.id) {
+              // check to see if it matches and send
+              user.matchExistingQuery(q, userData, function() {
+                io.sockets.sockets[sessionId].volatile.emit('instodisconnect', userData);
+              });
+            }
+          
+          }
+        
+        });
+        
+      });
       
       // remove this from our array of users
       user.removeUserBySessionId(this.id);

@@ -5,6 +5,8 @@ var redisBroadcastChannel = 'instobroadcast';
 var redisIndexHash = 'instoIndexHash';
 var redisQueryHash = 'instoQueryHash';
 
+var syslog = require('./includes/syslog.js');
+
 /*
  *  ADD user 
  *  userData  - json object describing user
@@ -23,6 +25,8 @@ var getUserBySessionId = function(sessionId, callback) {
   
   redisClient.hget(redisUserHash, sessionId, function(err, obj) {
     
+    console.log(redisUserHash, sessionId);
+    
     //if we don't have a callback
     if (typeof callback != "function") {
       syslog.log('Insto: getUserBySessionId - no callback');
@@ -31,7 +35,7 @@ var getUserBySessionId = function(sessionId, callback) {
     
     //otherwise
     else {
-      syslog.log('Insto: getUserBySessionId - callback done');
+      syslog.log('Insto: getUserBySessionId - callback done', obj);
       callback(JSON.parse(obj));
     }
     
@@ -199,6 +203,23 @@ var matchUserQuery = function(query, socketId, callback) {
    
 }
 
+/*
+ *  Match an existing user query
+ */
+var matchExistingQuery = function(query, user, callback) {
+  
+  // does this user match the query
+  var match = calculateUserQueryMatch(query, user);
+  
+  // if we have a match, do the callback
+  if (match) {
+
+    callback();
+    
+  }
+  
+}
+
 module.exports = {
   redisUserHash: redisUserHash,
   redisBroadcastChannel: redisBroadcastChannel,
@@ -211,5 +232,6 @@ module.exports = {
   sendBroadcast: sendBroadcast,
   saveUserQuery: saveUserQuery,
   deleteUserQuery: deleteUserQuery,
-  matchUserQuery: matchUserQuery
+  matchUserQuery: matchUserQuery,
+  matchExistingQuery: matchExistingQuery
 }
