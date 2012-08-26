@@ -72,6 +72,15 @@ function InstoClient(userData, userQuery, callback, host, protocol) {
     callback(msg);
   });
   
+  // listen for incoming disconnection query matches
+  socket.on('instoquery', function(msg) {
+    
+    var obj = new Object;
+    obj._type = "query";
+    obj.users = msg;
+    callback(obj);
+  });
+  
   
   /*
    *  Websocket API methods
@@ -106,4 +115,13 @@ function InstoClient(userData, userQuery, callback, host, protocol) {
     socket.emit('api-broadcast', obj);
     
   }
+  
+  // handle broadcast websocket API call
+  this.query = function(query) {
+
+    //send our object
+    socket.emit('api-query', query);
+    
+  }
+  
 }

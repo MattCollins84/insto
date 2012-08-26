@@ -1,0 +1,87 @@
+<html>
+<head>
+  <title>Insto - Real-time message broker</title>
+  <style type="text/css">
+    body { font-family: "Arial";}
+    h3 {font-size:16px; color:#777;}
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      overflow: auto;
+    }
+    
+    li {
+      float: left;
+      border: 1px solid black;
+      border-bottom: none;
+      margin: 5px;
+      padding: 0;
+    }
+    
+    table {
+      margin: 0;
+      border: none;
+    }
+    
+    table th {
+      background: #EFEFEF;
+      padding: 5px;
+      border-bottom: 1px solid black;
+    }
+    
+    table td {
+      border-bottom: 1px solid black;
+      padding: 3px;
+    }
+    
+  </style>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/prototype/1.7.0.0/prototype.js"></script>
+  <script type="text/javascript">
+  
+    // create a list of phones
+    var renderListOfClients = function () {
+      new Ajax.Request("/stats",{
+        method:'get',
+        onSuccess: function(transport){
+          var obj = JSON.parse(transport.responseText);
+          var socketlist = "<ul>";
+          for(socketid in obj.msg) {
+            var client = obj.msg[socketid];
+            socketlist += "<li>";
+            socketlist += "<table cellspacing='0' cellpadding='0'><tr><th colspan='2'>"+socketid+"</td></tr>";
+            
+            for (i in client) {
+              socketlist += "<tr><td>"+i+"</td>";
+              socketlist += "<td>"+client[i]+"</td></tr>";
+            }
+            
+            socketlist += "</table></li>";
+          }
+          socketlist += "</ul>";
+          $('socketlist').update(socketlist);
+        },
+        onFailure: function(){ alert('Something went wrong...') }
+      });
+    }
+  
+
+    // onload
+    Event.observe(window, 'load', function() {
+      
+      // create a list of phones
+      renderListOfClients();
+      
+    });
+    
+  </script>
+</head>
+<body>
+  
+  <h1>Connected Clients</h1>
+  <input type="button" onclick="renderListOfClients()" value="Refresh" />
+    
+  <div id="socketlist"></div>
+
+</body>
+</html>

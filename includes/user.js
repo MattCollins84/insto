@@ -220,6 +220,22 @@ var matchExistingQuery = function(query, user, callback) {
   
 }
 
+/*
+ *  Get user stats
+ */
+var stats = function stats(callback) {
+  redisClient.hgetall(redisUserHash,function (err, obj) {
+    // iterate through the hash
+    for(var sessionId in obj) {
+      // parse the JSON
+      var u = JSON.parse(obj[sessionId]);
+      obj[sessionId] = JSON.parse(obj[sessionId]);
+    }
+    callback(obj);
+    
+  });
+}
+
 module.exports = {
   redisUserHash: redisUserHash,
   redisBroadcastChannel: redisBroadcastChannel,
@@ -233,5 +249,6 @@ module.exports = {
   saveUserQuery: saveUserQuery,
   deleteUserQuery: deleteUserQuery,
   matchUserQuery: matchUserQuery,
-  matchExistingQuery: matchExistingQuery
+  matchExistingQuery: matchExistingQuery,
+  stats: stats
 }

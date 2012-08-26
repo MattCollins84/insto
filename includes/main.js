@@ -49,7 +49,16 @@ var startup = function(port) {
   // listen for connections via the supplied port
   var application = api.listen(port)
   
-  
+  /*
+   *  Render out connected users
+   */
+  api.get('/', function(req, res){
+    fs.readFile("index.html", function (err, data) {
+      // and end the connection with the contents of the static file
+      res.writeHead(200, {'Content-Type': "text/html"});
+      return res.end(data);
+    });
+  });
   
   /*
    *  TEST
@@ -117,6 +126,33 @@ var startup = function(port) {
     // attempt to send message to specified user of group of users
     user.sendMessage(userQuery, req.query, function(status) {
         restSend(res, status);
+    });
+
+  });
+  
+  /*
+   * Find users that match a supplied query
+   */
+  api.get('/query', function(req, res) {
+
+    // log the request
+    syslog.log("Insto: query API request");
+
+    user.matchUserQuery(req.query, null, function(matches) {
+      restSend(res, true, matches);
+    }); 
+
+  });
+  
+  // app stats
+  api.get('/stats', function(req, res){
+    syslog.log("Insto: user stats request");
+
+    // get the stats from the user store
+    user.stats( function(users) {
+
+      // when it's ready, send it back
+      restSend(res, true, users);
     });
 
   });
@@ -208,7 +244,7 @@ var startup = function(port) {
       if (identity.userData) {
         // add user to the user array
         if(user.addUser(identity.userData, socket.id)) {
-          syslog.log("WebSocket: Received identity packet");
+          syslog.log("Insto: Received identity packet");
         }
       }
       
@@ -279,7 +315,18 @@ var startup = function(port) {
       user.sendBroadcast(data['_msg'], function() {});
     });
     
-    
+    // if we receive a one off query request
+    socket.on('api-query', function(query) {
+      
+      /*
+       *  data must be a JS object in this format
+       */
+      syslog.log("Insto: Received query request");
+      user.matchUserQuery(query, socket.id, function(matches) {
+        // attempt to send message to specified user of group of users
+        socket.volatile.emit('instoquery', matches);
+      });
+    });
     
     /*
      *  When a socket disconnects
