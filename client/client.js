@@ -116,7 +116,7 @@ function InstoClient(userData, userQuery, callback, host, protocol) {
     
   }
   
-  // handle broadcast websocket API call
+  // handle query websocket API call
   this.query = function(query) {
 
     //send our object
