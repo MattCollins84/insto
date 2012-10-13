@@ -23,7 +23,7 @@ function InstoClient(userData, userQuery, callback, host, protocol) {
   
   //check we have a host value
   if (typeof host == "undefined") {
-    host = "http://127.0.0.1:3000";
+    host = "http://ec2-176-34-192-217.eu-west-1.compute.amazonaws.com:3000";
   }
   
   //check we have a callback
