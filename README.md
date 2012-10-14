@@ -112,7 +112,7 @@ This returns a simple list of the connected users.
 ## Websocket API documentation
 
 ### The Insto Client object
-The Insto Client object takes up to 5 different parameters:
+The Insto Client object takes up to 4 different parameters:
 
 #### userData (required)
 This is a Javascript object that describes the user making the connection
@@ -138,23 +138,18 @@ var callback = function(data) {
 ```
 
 #### host (optional - defaults to the domain of the web page creating the connection, with a port of 3000)
-The insto server to connect to
+The insto server to connect to.
 
 ```
-var host = "http://some.graffiti.server.com:3030";
+var host = "http://insto.server.com:3000";
 ```
 
 
-#### protocol (optional - defaults to http)
-
-To connect via https, pass "https".
-
-
-#### Object creation
+### Object creation
 And the object is created like so:
 
 ```
-var g = new Insto Client(userData, userQuery, callback, host);
+var i = new Insto Client(userData, userQuery, callback, host);
 ```
 
 ### What are notifications
@@ -174,7 +169,7 @@ All notifications return a Javascript object with a notification type stored in 
 {"message":"this is a message","_type":"notification"}
 ```
 
-All Insto  notifications of type 'notification' are schema-less, and as such can be in any format as defined by the sender, as long as they are valid Javascript objects. However they will always contain the _type property.
+All Insto notifications of type 'notification' are schema-less, and as such can be in any format as defined by the sender, as long as they are valid Javascript objects. However they will always contain the _type property.
 
 #### connect / disconnect
 These types of notification are sent when a Insto Client changes it's connection state. The connect/disconnect notification provides the userData of the Insto Client that has changed state as long as that client matches the userQuery supplied.
@@ -236,16 +231,16 @@ This notification type is returned to the same Insto Client that calls the query
 }
 ```
 
-### Register for connections/disconnections from a user who matches a specified query
+#### Register for connections/disconnections from a user who matches a specified query
 
-Supplying a valid userQuery object when creating the Insto Client will allow this client to receive a connect or disconnect notification when any other Insto Client connects or disconnects from the server. The example below shows a Insto Client that is listening for connections/disconnections for all Insto  users with a 'userType' of 'sales'.
+Supplying a valid userQuery object when creating the Insto Client will allow this client to receive a connect or disconnect notification when any other Insto Client connects or disconnects from the server. The example below shows a Insto Client that is listening for connections/disconnections for all Insto users with a 'userType' of 'sales'.
 
 ```
-<script type="text/javascript" src="http://graffiti.touchlocal.com:3000/socket.io/socket.io.js"></script>
-<script type="text/javascript" src="http://graffiti.touchlocal.com:3000/lib/client.js"></script>
+<script type="text/javascript" src="http://insto:3000/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="http://insto:3000/lib/client.js"></script>
 <script type="text/javascript">
 
-  //callback function for handling messages received from graffiti
+  //callback function for handling messages received from insto
   var callback = function(data) {
     console.log(data);
   }
@@ -261,8 +256,8 @@ Supplying a valid userQuery object when creating the Insto Client will allow thi
                     'userType': 'user'
                   };
   
-  //create new graffiti object, passing in userData and callback function
-  var g = new Insto Client(userData, userQuery, callback);
+  //create new insto object, passing in userData and callback function
+  var i = new Insto Client(userData, userQuery, callback);
   
 </script>
 ```
@@ -281,7 +276,7 @@ var query = {
             }
 ```
 
-Messages sent via Insto  are schema-less, and although they must be a valid Javascript object, they can have any structure as required by the calling application.
+Messages sent via Insto are schema-less, and although they must be a valid Javascript object, they can have any structure as required by the calling application.
 
 A simple message object:
 
@@ -306,11 +301,11 @@ var message = {
 The below example shows a simple message being sent to all users that have a 'userType' of 'sales':
 
 ```
-<script type="text/javascript" src="http://graffiti.touchlocal.com:3000/socket.io/socket.io.js"></script>
-<script type="text/javascript" src="http://graffiti.touchlocal.com:3000/lib/client.js"></script>
+<script type="text/javascript" src="http://insto:3000/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="http://insto:3000/lib/client.js"></script>
 <script type="text/javascript">
 
-  //callback function for handling messages received from graffiti
+  //callback function for handling messages received from insto
   var callback = function(data) {
     console.log(data);
   }
@@ -322,8 +317,8 @@ The below example shows a simple message being sent to all users that have a 'us
                     'userType': 'user'
                   };
   
-  //create new graffiti object, passing in userData and callback function
-  var g = new Insto Client(userData, false, callback);
+  //create new insto object, passing in userData and callback function
+  var i = new Insto Client(userData, false, callback);
         
   //message query
   var query = {"userType": "sales"};
@@ -333,7 +328,7 @@ The below example shows a simple message being sent to all users that have a 'us
   
   
   //send!
-  g.send(query, msg);
+  i.send(query, msg);
   
 </script>
 ```
@@ -343,11 +338,11 @@ The below example shows a simple message being sent to all users that have a 'us
 Use this method to send a message to all connected Insto Clients. The message object obeys the same rules as the Insto Client.send() method.
 
 ```
-<script type="text/javascript" src="http://graffiti.touchlocal.com:3000/socket.io/socket.io.js"></script>
-<script type="text/javascript" src="http://graffiti.touchlocal.com:3000/lib/client.js"></script>
+<script type="text/javascript" src="http://insto:3000/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="http://insto:3000/lib/client.js"></script>
 <script type="text/javascript">
 
-  //callback function for handling messages received from graffiti
+  //callback function for handling messages received from insto
   var callback = function(data) {
     console.log(data);
   }
@@ -359,14 +354,14 @@ Use this method to send a message to all connected Insto Clients. The message ob
                     'userType': 'user'
                   };
   
-  //create new graffiti object, passing in userData and callback function
-  var g = new Insto Client(userData, false, callback);
+  //create new insto object, passing in userData and callback function
+  var i = new Insto Client(userData, false, callback);
   
   //create a message object to be sent to all users
   var msg = { "message": "This is an example message" };
   
   //broadcast message to all
-  g.broadcast(msg);
+  i.broadcast(msg);
 </script>
 ```
 
@@ -391,11 +386,11 @@ All matching users are returned in a notification of type 'query'.
 An example of using Insto Client.query();
 
 ```
-<script type="text/javascript" src="http://graffiti.touchlocal.com:3000/socket.io/socket.io.js"></script>
-<script type="text/javascript" src="http://graffiti.touchlocal.com:3000/lib/client.js"></script>
+<script type="text/javascript" src="http://insto:3000/socket.io/socket.io.js"></script>
+<script type="text/javascript" src="http://insto:3000/lib/client.js"></script>
 <script type="text/javascript">
 
-  //callback function for handling messages received from graffiti
+  //callback function for handling messages received from insto
   var callback = function(data) {
     console.log(data);
   }
@@ -407,8 +402,8 @@ An example of using Insto Client.query();
                     'userType': 'user'
                   };
   
-  //create new graffiti object, passing in userData and callback function
-  var g = new Insto Client(userData, false, callback);
+  //create new insto object, passing in userData and callback function
+  var i = new Insto Client(userData, false, callback);
   
   //create a message object to be sent to all users
   var query = {
@@ -417,17 +412,17 @@ An example of using Insto Client.query();
               }
   
   //send query
-  g.query(query);
+  i.query(query);
 </script>
 ```
 
-## What is Insto  for?
+## What is Insto for?
 
-Insto  doesn't care what you use it for; it is the means for sending real-time messages to groups of connected users. Insto  doesn't know anything about the application it is working with, it is merely the messenger. It stores nothing permanently as the Redis keys are removed on startup.
+Insto is not designed for any particular use case; it is the means for sending real-time messages to groups of connected users. Insto doesn't know anything about the application it is working with, it is merely the messenger. It stores nothing permanently as the Redis keys are removed on startup.
 
 ## Installation
 
-Insto  requires Node.js v_0.6 or above. Once the repository is cloned simply run:
+Insto requires Node.js v_0.6 or above. Once the repository is cloned simply run:
 
 ```
   npm install
@@ -437,38 +432,14 @@ to install the Node modules that are required (listed in package.json).
 
 ## Running
 
-Insto  requires Redis to be running. Then simply run the Insto  executable:
+Insto requires Redis to be running. Then simply run the Insto executable:
 
 ```
-  ./graffiti.js
+  ./insto.js
 ```
 
 or if you want to run Insto  on a port other than the default, you can supply the port at the command-line:
 
 ```
-  ./graffiti.js --port 8080
+  ./insto.js --port 8080
 ```
-
-or if you want to run Insto  with a index on a specific user-supplied field. If you know you are going to be sending lots of Insto  messages by userId (e.g. curl 'http://insto:3000/message/to/userId/6?foo=bar'), and you have lots of connected users, it is more efficient to create an index on 'userId' which means the user's socket can be found with one Redis query. Ad-hoc requests require the entire user list to be traversed in order to identify the matching users which gets more inefficient with each added user. N.B. indexes should only be used for fields that are unique in the user space, as only one entry is made in the index per value. In other words, indexes are good for ids, not so good for surnames etc.
-
-```
-  ./graffiti.js --port 8080 --index userId
-```
-
-Insto  can be started using HTTPS using (http is the default)
-```
-  ./graffiti.js --protocol https
-```
-
-N.B. if using curl to call a Insto  operating in https mode with a self-signed secure certificate, then you will need to use curl with the "-k" option to stop it complaining about an invalid certificate. e.g.
-
-```
-  curl -ik 'https://insto:3000/message/all?a=1&b=2'
-```
-
-Insto  can be started as a daemon with:
-
-```
-  ./graffifi.js --daemon
-```
-

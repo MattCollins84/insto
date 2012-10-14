@@ -3,7 +3,7 @@
  *  This will be included in the client side
  *  To provide Websocket API features
  */
-function InstoClient(userData, userQuery, callback, host, protocol) {
+function InstoClient(userData, userQuery, callback, host) {
   
   /*
    *  Validation
