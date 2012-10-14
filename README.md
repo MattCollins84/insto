@@ -32,49 +32,55 @@ A Websocket API is also available for performing more complex selections of user
 
 The list of connected users is stored in Redis. Also, outgoing messages are coordinated using Redis pub/sub channels. This allows multiple instances of the Insto worker to be operated together to allow scalability on multi-core processors or even multi-server installations.
 
-Here is how everything is connected:
+### Here is how everything is connected:
 
 ![Schematic diagram](https://github.com/MattCollins84/insto/blob/master/schematic.png?raw=true "Insto - Schematic Diagram")
 
 *  Web browser clients make permanent WebSocket connections (using socket.io)
 *  Other applications make transient connections to the API to post messages for distribution
-*  The Insto  worker processes subscribe to Redis pubsub channels to receive notifications that individual or broadcast messages are to be dispatched
+*  The Insto worker processes subscribe to Redis pubsub channels to receive notifications that individual or broadcast messages are to be dispatched
 *  Redis stores the array of connected users and their attributes
-*  Redis optionally stores an index of a nominated field, for speed
 
-### 5) Web interface
+## 5) Web interface
 
-If you visit 'http://localhost:3000', you will see Insto 's simple web interface which allows you to see a list of the clients that are connected and how they identified themselves.
+If you visit 'http://insto:3000', you will see Insto's simple web interface which allows you to see a list of the clients that are connected and how they identified themselves. This can be used for debugging.
 
 ## RESTful API documentation
 
 ### Send a notification to all users.
 
 ```
-  curl -i 'http://localhost:3000/message/all?param1=a&param2=b'
+  curl -i 'http://insto:3000/message/all?param1=a&param2=b'
 ```
 
-The parameters after the '?' are expressed as a JSON object and broadcast to all connected clients.
+The parameters after the '?' are expressed as a JSON object (shown below) and broadcast to all connected clients.
+
+```
+  {
+    "param1": "a",
+    "param2": "b"
+  }
+```
 
 ### Send a notification to a sub-set of users
 
 ```
- curl -i 'http://localhost:3000/message/to/userType/user?param1=a&param2=b'
+ curl -i 'http://insto:3000/message/to/userType/user?param1=a&param2=b'
 ```
 
 Sends the query parameters to connected clients that have userType='user'. The final two parameters in the URL can be anything you like; they should match the key/values supplied in the identity packet from the connecting WebSocket user e.g.
 
 ```
-curl 'http://localhost:3000/message/to/userType/wallboard?dog=1'
-curl 'http://localhost:3000/message/to/firstname/Laura?foo=bar'
-curl 'http://localhost:3000/message/to/adn/104?foo=bar'
+curl 'http://insto:3000/message/to/userType/wallboard?dog=1'
+curl 'http://insto:3000/message/to/firstname/Laura?foo=bar'
+curl 'http://insto:3000/message/to/user_id/104?foo=bar'
 ```
 
 ### Query connected users
-It is possible to query the connected users and detect who is connected that match a subset provided.
+It is possible to query the connected users and detect who is connected that match a provided query.
 
 ```
-curl 'localhost:3000/query?userType=web&businessId=501642881088'
+curl 'http://insto:3000/query?userType=web&businessId=501642881088'
 
 {
   "msg":[
@@ -98,10 +104,10 @@ curl 'localhost:3000/query?userType=web&businessId=501642881088'
 ### See who's connected
 
 ```
-  curl -i 'http://localhost:3000/stats'
+  curl -i 'http://insto:3000/'
 ```
 
-This returns a list of the attached users and the identity of each connected user.
+This returns a simple list of the connected users.
 
 ## Websocket API documentation
 
@@ -131,8 +137,8 @@ var callback = function(data) {
 }
 ```
 
-#### host (optional - defaults to http://graffiti.touchlocal.com:3000)
-The graffiti server to connect to
+#### host (optional - defaults to the domain of the web page creating the connection, with a port of 3000)
+The insto server to connect to
 
 ```
 var host = "http://some.graffiti.server.com:3030";
@@ -443,7 +449,7 @@ or if you want to run Insto  on a port other than the default, you can supply th
   ./graffiti.js --port 8080
 ```
 
-or if you want to run Insto  with a index on a specific user-supplied field. If you know you are going to be sending lots of Insto  messages by userId (e.g. curl 'http://localhost:3000/message/to/userId/6?foo=bar'), and you have lots of connected users, it is more efficient to create an index on 'userId' which means the user's socket can be found with one Redis query. Ad-hoc requests require the entire user list to be traversed in order to identify the matching users which gets more inefficient with each added user. N.B. indexes should only be used for fields that are unique in the user space, as only one entry is made in the index per value. In other words, indexes are good for ids, not so good for surnames etc.
+or if you want to run Insto  with a index on a specific user-supplied field. If you know you are going to be sending lots of Insto  messages by userId (e.g. curl 'http://insto:3000/message/to/userId/6?foo=bar'), and you have lots of connected users, it is more efficient to create an index on 'userId' which means the user's socket can be found with one Redis query. Ad-hoc requests require the entire user list to be traversed in order to identify the matching users which gets more inefficient with each added user. N.B. indexes should only be used for fields that are unique in the user space, as only one entry is made in the index per value. In other words, indexes are good for ids, not so good for surnames etc.
 
 ```
   ./graffiti.js --port 8080 --index userId
@@ -457,7 +463,7 @@ Insto  can be started using HTTPS using (http is the default)
 N.B. if using curl to call a Insto  operating in https mode with a self-signed secure certificate, then you will need to use curl with the "-k" option to stop it complaining about an invalid certificate. e.g.
 
 ```
-  curl -ik 'https://localhost:3000/message/all?a=1&b=2'
+  curl -ik 'https://insto:3000/message/all?a=1&b=2'
 ```
 
 Insto  can be started as a daemon with:
