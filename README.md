@@ -34,7 +34,7 @@ The list of connected users is stored in Redis. Also, outgoing messages are coor
 
 Here is how everything is connected:
 
-![Schematic diagram](https://github.com/touchlocal/graffiti/blob/master/images/Insto Schematic.png?raw=true "Insto  - Schematic Diagram")
+![Schematic diagram](https://github.com/MattCollins84/insto/blob/master/schematic.png?raw=true "Insto - Schematic Diagram")
 
 *  Web browser clients make permanent WebSocket connections (using socket.io)
 *  Other applications make transient connections to the API to post messages for distribution
