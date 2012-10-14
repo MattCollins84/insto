@@ -2,6 +2,8 @@
 
 Insto is a prototype application designed to provide real-time functionality to existing IT systems.
 
+Throughout this documentation the assumption is made that the Insto server is running on the host 'http://insto' on port '3000'.
+
 ## 1) Real-time Message Broker 
 
 Insto listens on port 3000 for WebSocket connections. When a user connects, it is sent an "identify" request. The user should reply with an "identity" message which is a JSON object that defines the connector's identity e.g. 
@@ -141,7 +143,7 @@ var callback = function(data) {
 The insto server to connect to.
 
 ```
-var host = "http://insto.server.com:3000";
+var host = "http://insto:3000";
 ```
 
 
