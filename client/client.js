@@ -87,10 +87,18 @@ function InstoClient(userData, userQuery, callback, host) {
    */
   
   // websocket API send request
-  this.send = function(query, msg) {
+  this.send = function(query, msg, sendToSelf) {
     
     if (typeof query != "object") {
       throw 'Insto: Invalid query object';
+    }
+    
+    if (typeof msg != "object") {
+      msg = {};
+    }
+    
+    if (typeof sendToSelf == "undefined") {
+      sendToSelf = false;
     }
     
     //create our object
@@ -98,6 +106,7 @@ function InstoClient(userData, userQuery, callback, host) {
     obj['_query'] = query;
     obj['_msg'] = new Object;
     obj['_msg']['msg'] = msg;
+    obj['_sendToSelf'] = (sendToSelf)?true:false;
 
     //send our object
     socket.emit('api-send', obj);

@@ -54,7 +54,7 @@ var removeUserBySessionId = function(sessionId) {
 /*
  *  Send message to matching users
  */
-var sendMessage = function(query, msg, callback) {
+var sendMessage = function(query, msg, sendToSelf, callback) {
   var retval=false;
   var sessionId=false;
   
@@ -73,7 +73,12 @@ var sendMessage = function(query, msg, callback) {
       // parse the JSON
       var u = JSON.parse(obj[sessionId]);
       
-      matches = calculateUserQueryMatch(query, u);
+      // attempt a match if required and send the message
+      var matches = false;
+      
+      if (sendToSelf === true || (!sendToSelf && sessionId != sendToSelf) ) {
+        matches = calculateUserQueryMatch(query, u);
+      }
       
       if (matches) {
         // send them a private message by publishing to a pubsub channel on redis

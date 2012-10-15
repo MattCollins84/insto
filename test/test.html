@@ -2,28 +2,75 @@
   <head>
     <script type="text/javascript" src="/socket.io/socket.io.js"></script>
     <script type="text/javascript" src="/lib/client.js"></script>
-    <script type="text/javascript">
-      
-      // specify the user data
-      var userData = {  'userId': 1, 
-                        'firstname': 'Matt', 
-                        'lastName': 'Collins',
-                        'userType': 'admin'
-                      };
-                      
-      // specify the user query
-      var userQuery = {'userType': 'sales'};
-                      
-      // define a call back                
-      var callback = function(data) {
-        console.log(data);
-      }
-                      
-      //connect to insto
-      var i = new InstoClient(userData, userQuery, callback);
-    </script>
+    
   </head>
   <body>
     
   </body>
+  
+  <script type="text/javascript">
+      
+      var html = "";
+      var complete = 0;
+      
+      // specify the user data
+      var user1 = { "unit": 1 };
+                      
+      // specify the user query
+      var query1 = { "unit": 1 };
+                      
+      // define a call back                
+      var callback = function(data) {
+        
+        if (data._type == "connectedusers") {
+          html += "<p>Received connected users</p>";
+          document.write(html);
+          complete++;
+        }
+        
+        if (data._type == "query") {
+          html = "<p>Query sent and received</p>";
+          document.write(html);
+          complete++;
+        }
+        
+        if (typeof data.msg != "undefined" && typeof data.msg.test == "string") {
+          html = "<p>Message sent and received</p>";
+          document.write(html);
+          complete++;
+        }
+        
+        if (typeof data.msg != "undefined" && typeof data.msg.bcast == "string") {
+          html = "<p>Broadcast sent and received</p>";
+          document.write(html);
+          complete++;
+        }
+        
+        if (complete == 4) {
+          setTimeout(function() {
+            alert('Tests successful!');
+          }, 1000);
+        }
+      }
+                      
+      //connect to insto
+      var i = new InstoClient(user1, query1, callback);
+      
+      setTimeout(function() {
+        i.send(query1, {"test": "From 1 > 2"}, true);
+      }, 2000);
+      
+      setTimeout(function() {
+        i.broadcast({"bcast": "this is a broadcast"});
+      }, 3000);
+      
+      setTimeout(function() {
+        i.query(query1);
+      }, 4000);
+      
+      if (typeof i == "object") {
+        html += "<p>Insto Client setup correctly</p>";
+        document.write(html);
+      }
+    </script>
 </html>

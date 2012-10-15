@@ -62,18 +62,10 @@ var startup = function(port) {
   
   /*
    *  TEST
-   *  Check basic connections
+   *  Perform tests to make sure everything is a-ok
    */
   api.get('/test', function(req, res){
     fs.readFile("test/test.html", function (err, data) {
-      // and end the connection with the contents of the static file
-      res.writeHead(200, {'Content-Type': "text/html"});
-      return res.end(data);
-    });
-  });
-  
-  api.get('/test2', function(req, res){
-    fs.readFile("test/test2.html", function (err, data) {
       // and end the connection with the contents of the static file
       res.writeHead(200, {'Content-Type': "text/html"});
       return res.end(data);
@@ -300,7 +292,9 @@ var startup = function(port) {
        *  data['_msg']    - a JS object to send to the matched user
        */
       syslog.log("Insto: Received send request");
-      user.sendMessage(data['_query'], data['_msg'], function() {});
+      var sts = (data['_sendToSelf'])?true:socket.id;
+
+      user.sendMessage(data['_query'], data['_msg'], sts, function() {});
     });
     
     
