@@ -264,8 +264,14 @@ Supplying a valid userQuery object when creating the Insto Client will allow thi
 </script>
 ```
 
-### Insto Client.send() - Send a notification to a subset of users
-The Insto Client can send a message to any other connected Insto Client by providing a userQuery. All users who match this query will receive the message.
+### Insto Client.send( userQuery, message, [sendToSelf] ) - Send a notification to a subset of users
+
+Parameters
+userQuery   - [required] define the user(s) that this message should be sent to
+message     - [required] define the message that should be sent
+sendToSelf  - [optional - default: false] should this message be sent to the message sender (only if they match the userQuery)
+
+The Insto Client can send a message to any other connected Insto Client by providing a userQuery. All users who match this query will receive the message. If the sending user matches the userQuery they will not receive the message unless the sendToSelf parameter is defined as true.
 
 A userQuery must be a valid Javascript object, as must the message. If a message is required to go to all connected users, please use the Insto Client.broadcast() method.
 
@@ -335,7 +341,10 @@ The below example shows a simple message being sent to all users that have a 'us
 </script>
 ```
 
-### Insto Client.broadcast() - Send a notification to all users
+### Insto Client.broadcast( message ) - Send a notification to all users
+
+Parameters
+message     - [required] define the message that should be sent
 
 Use this method to send a message to all connected Insto Clients. The message object obeys the same rules as the Insto Client.send() method.
 
@@ -369,7 +378,10 @@ Use this method to send a message to all connected Insto Clients. The message ob
 
 This would send a message to all users.
 
-### Insto Client.query() - Find out if there are any available users
+### Insto Client.query( userQuery ) - Find all connected users that match a userQuery
+Parameters
+userQuery   - [required] define the user(s) that this query should return
+
 It is possible to search the connected Insto Clients to see if there are any that match the required subset.
 
 This method requires a userQuery object to be passed in.
