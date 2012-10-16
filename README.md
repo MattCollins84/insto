@@ -2,25 +2,28 @@
 
 Insto is a prototype application designed to provide real-time functionality to existing IT systems.
 
-Throughout this documentation the assumption is made that the Insto server is running on the host 'http://insto' on port '3000'.
+Throughout this documentation the assumption is made that the Insto server is running on the hostname 'http://insto' using port '3000'.
+
+There are five key areas to the Insto system.
 
 ## 1) Real-time Message Broker 
 
-Insto listens on port 3000 for WebSocket connections. When a user connects, it is sent an "identify" request. The user should reply with an "identity" message which is a JSON object that defines the connector's identity e.g. 
+Insto listens on port 3000 for WebSocket connections.
+
+When a client connects, it is sent an "identify" request. The client should reply with an "identity" message which contains a userData JSON object that defines the connector's identity e.g. 
 
 ```
 {"userId":104,"firstname":"Laura","lastName":"Smith","userType":"user"}
 ```
 or 
-
 ```
 {"userType":"wallboard"}
 ```
-or anything you like.
+or anything you like!
 
-This action is handled internally by Insto.
+The communication between Insto and the client is handled automatically, however the userData must be defined on connection by the application (see Websocket API section of documentation).
 
-The key/value pairs supplied in the identity object can be used in the Rest API (below) to send messages to individual connected users or groups of users. e.g. "send a message to all users whose userType=user".
+The key/value pairs supplied in the userData object can be used by both the REST and Websocket APIs to send messages to individual connected users or groups of users, amongst other things.
 
 ## 2) Rest API
 
@@ -46,70 +49,6 @@ The list of connected users is stored in Redis. Also, outgoing messages are coor
 ## 5) Web interface
 
 If you visit 'http://insto:3000', you will see Insto's simple web interface which allows you to see a list of the clients that are connected and how they identified themselves. This can be used for debugging.
-
-## RESTful API documentation
-
-### Send a notification to all users.
-
-```
-  curl -i 'http://insto:3000/message/all?param1=a&param2=b'
-```
-
-The parameters after the '?' are expressed as a JSON object (shown below) and broadcast to all connected clients.
-
-```
-  {
-    "param1": "a",
-    "param2": "b"
-  }
-```
-
-### Send a notification to a sub-set of users
-
-```
- curl -i 'http://insto:3000/message/to/userType/user?param1=a&param2=b'
-```
-
-Sends the query parameters to connected clients that have userType='user'. The final two parameters in the URL can be anything you like; they should match the key/values supplied in the identity packet from the connecting WebSocket user e.g.
-
-```
-curl 'http://insto:3000/message/to/userType/wallboard?dog=1'
-curl 'http://insto:3000/message/to/firstname/Laura?foo=bar'
-curl 'http://insto:3000/message/to/user_id/104?foo=bar'
-```
-
-### Query connected users
-It is possible to query the connected users and detect who is connected that match a provided query.
-
-```
-curl 'http://insto:3000/query?userType=web&businessId=501642881088'
-
-{
-  "msg":[
-    {
-      "businessId":"501642881088",
-      "url":"http://goat-scoot/England/Cleveland/Stockton-on-Tees/Scoot-Business-DirectoryPOPOP-10108141.html",
-      "uniqueId":294996373,
-      "userType":"web"
-    },
-    {
-      "businessId":"501642881088",
-      "url":"http://goat-scoot/England/Cleveland/Stockton-on-Tees/Scoot-Business-DirectoryPOPOP-10108141.html",
-      "uniqueId":294996373,
-      "userType":"web"
-    }
-  ],
-  "success":true
-}
-```
-
-### See who's connected
-
-```
-  curl -i 'http://insto:3000/'
-```
-
-This returns a simple list of the connected users.
 
 ## Websocket API documentation
 
@@ -171,10 +110,10 @@ All notifications return a Javascript object with a notification type stored in 
 {"message":"this is a message","_type":"notification"}
 ```
 
-All Insto notifications of type 'notification' are schema-less, and as such can be in any format as defined by the sender, as long as they are valid Javascript objects. However they will always contain the _type property.
+It is important to remember that all Insto notifications of type 'notification' are schema-less, and as such can be in any format as defined by the sender, as long as they are valid Javascript objects. However they will always contain the _type property.
 
-#### connect / disconnect
-These types of notification are sent when a Insto Client changes it's connection state. The connect/disconnect notification provides the userData of the Insto Client that has changed state as long as that client matches the userQuery supplied.
+#### connect / disconnect notifications
+These types of notification are sent when a Insto Client changes it's connection state. If this client matches a supplied userQuery of another Insto client they will receive a connect/disconnect notification, altering them to this change of state.
 
 ```
 {"userId":10,"firstname":"James","lastName":"Robinson","userType":"test","_type":"connect"}
@@ -208,7 +147,7 @@ If a userQuery is supplied then a connectedusers notification is automatically r
 ```
 
 #### query
-This notification type is returned to the same Insto Client that calls the query method. It returns with an array of users that match the supplied query, very much like the 'connectedusers' notification
+This notification type is returned to the same Insto Client that calls the query method. It returns with an array of users that match the supplied query, very much like the 'connectedusers' notification.
 
 ```
 {
@@ -294,7 +233,7 @@ var message = {
               }
 ```
 
-A more complicated message object, still perfectly allowed:
+A more complicated message object, still perfectly valid:
 
 ```
 var message = {
@@ -428,6 +367,62 @@ An example of using Insto Client.query();
   //send query
   i.query(query);
 </script>
+```
+
+## RESTful API documentation
+
+### Send a notification to all users.
+
+```
+  curl -i 'http://insto:3000/message/all?param1=a&param2=b'
+```
+
+The parameters after the '?' are expressed as a JSON object (shown below) and broadcast to all connected clients.
+
+```
+  {
+    "param1": "a",
+    "param2": "b"
+  }
+```
+
+### Send a notification to a sub-set of users
+
+```
+ curl -i 'http://insto:3000/message/to/userType/user?param1=a&param2=b'
+```
+
+Sends the query parameters to connected clients that have userType='user'. The final two parameters in the URL can be anything you like; they should match the key/values supplied in the identity packet from the connecting WebSocket user e.g.
+
+```
+curl 'http://insto:3000/message/to/userType/wallboard?dog=1'
+curl 'http://insto:3000/message/to/firstname/Laura?foo=bar'
+curl 'http://insto:3000/message/to/user_id/104?foo=bar'
+```
+
+### Query connected users
+It is possible to query the connected users and detect who is connected that match a provided query.
+
+```
+curl 'http://insto:3000/query?userType=web&businessId=501642881088'
+
+{
+  "msg":[
+    {
+      "businessId":"501642881088",
+      "url":"http://goat-scoot/England/Cleveland/Stockton-on-Tees/Scoot-Business-DirectoryPOPOP-10108141.html",
+      "uniqueId":294996373,
+      "userType":"web"
+    },
+    {
+      "businessId":"501642881088",
+      "url":"http://goat-scoot/England/Cleveland/Stockton-on-Tees/Scoot-Business-DirectoryPOPOP-10108141.html",
+      "uniqueId":294996373,
+      "userType":"web"
+    }
+  ],
+  "success":true
+}
 ```
 
 ## What is Insto for?
