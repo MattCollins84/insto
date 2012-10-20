@@ -2,15 +2,59 @@
   <head>
     <script type="text/javascript" src="/socket.io/socket.io.js"></script>
     <script type="text/javascript" src="/lib/client.js"></script>
-    
+    <script src="//ajax.googleapis.com/ajax/libs/prototype/1.7.1.0/prototype.js"></script>
+    <style type='text/css'>
+      
+      * {
+        font-family: Arial;
+      }
+      
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      
+      ul li {
+        padding: 5px;
+        background: #CFCFCF;
+        width: 300px;
+        height: 17px;
+        margin-bottom: 5px;
+        border: 2px solid grey;
+        font-weight: bold;
+        text-align: center;
+      }
+      
+      li.success {
+        background: #22CF22!important;
+      }
+      
+      li.fail {
+        background: #CF2222;
+      }
+      
+      .hidden {
+        display: none;
+      }
+      
+    </style>
   </head>
   <body>
+    
+    <ul id='tests'>
+      <li id='clientsetup'>Insto Client setup correctly</li>
+      <li id='connectedusers'>Received connected users</li>
+      <li id='message'>Message sent and received</li>
+      <li id='broadcast'>Broadcast sent and received</li>
+      <li id='query'>Query sent and received</li>
+      <li id='success' class='hidden success'>ALL TESTS SUCCESSFUL</li>
+    </ul>
     
   </body>
   
   <script type="text/javascript">
       
-      var html = "";
       var complete = 0;
       
       // specify the user data
@@ -23,32 +67,28 @@
       var callback = function(data) {
         
         if (data._type == "connectedusers") {
-          html += "<p>Received connected users</p>";
-          document.write(html);
+          $('connectedusers').addClassName('success');
           complete++;
         }
         
         if (data._type == "query") {
-          html = "<p>Query sent and received</p>";
-          document.write(html);
+          $('query').addClassName('success');
           complete++;
         }
         
         if (typeof data.msg != "undefined" && typeof data.msg.test == "string") {
-          html = "<p>Message sent and received</p>";
-          document.write(html);
+          $('message').addClassName('success');
           complete++;
         }
         
         if (typeof data.msg != "undefined" && typeof data.msg.bcast == "string") {
-          html = "<p>Broadcast sent and received</p>";
-          document.write(html);
+          $('broadcast').addClassName('success');
           complete++;
         }
         
         if (complete == 4) {
           setTimeout(function() {
-            alert('Tests successful!');
+            $('success').removeClassName('hidden');
           }, 1000);
         }
       }
@@ -58,19 +98,23 @@
       
       setTimeout(function() {
         i.send(query1, {"test": "From 1 > 2"}, true);
-      }, 2000);
+        $('message').addClassName('fail');
+      }, 1000);
       
       setTimeout(function() {
         i.broadcast({"bcast": "this is a broadcast"});
-      }, 3000);
+        $('broadcast').addClassName('fail');
+      }, 2000);
       
       setTimeout(function() {
         i.query(query1);
-      }, 4000);
+        $('query').addClassName('fail');
+      }, 3000);
       
       if (typeof i == "object") {
-        html += "<p>Insto Client setup correctly</p>";
-        document.write(html);
+        $('clientsetup').addClassName('success');
+      } else {
+        $('clientsetup').addClassName('fail');
       }
     </script>
 </html>
