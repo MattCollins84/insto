@@ -1,6 +1,6 @@
 {
   "name": "insto",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Real-time Message Broker",
   "main": "insto.js",
   "dependencies": {
