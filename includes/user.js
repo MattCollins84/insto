@@ -4,8 +4,14 @@ var redisUserHash = 'instoUsers';
 var redisBroadcastChannel = 'instobroadcast';
 var redisIndexHash = 'instoIndexHash';
 var redisQueryHash = 'instoQueryHash';
+var redisApiHash = 'instoApiHash';
+var redisApiUsers = 'instoApiUsers';
 
 var syslog = require('./includes/syslog.js');
+
+var db =require("./cloudant.js").users;
+
+var crypto = require('crypto');
 
 /*
  *  ADD user 
@@ -97,10 +103,10 @@ var sendMessage = function(query, msg, sendToSelf, callback) {
  *  BROADCAST
  *  Send a message to all connected clients
  */
-var sendBroadcast = function(msg,callback) {
-
+var sendBroadcast = function(channel,msg,callback) {
+  
   // send them a private message by publishing to a redis pubsub channel
-  redisClient.publish(redisBroadcastChannel, JSON.stringify(msg), function(err) {
+  redisClient.publish('bcast-'+channel, JSON.stringify(msg), function(err) {
     // call the callback
     callback(true);
   });
@@ -241,6 +247,30 @@ var stats = function stats(callback) {
   });
 }
 
+var createApiUser = function(user, callback) {
+  
+  if (typeof user.email == 'string' && typeof user.name == 'string') {
+    var newUser = {};
+    newUser.email = user.email;
+    newUser.name = user.name;
+    
+    var d = new Date;
+    var t = d.getTime();
+    
+    var md5 = crypto.createHash('md5');
+    md5.update(t.toString());
+    apikey = md5.digest('hex');
+    
+    db.save(apikey, newUser, function() {
+      callback(null, {"apikey": apikey});
+    });
+  }
+  
+  else {
+    callback(["You must supply both of the following parameters: email, name"], null);
+  }
+}
+
 module.exports = {
   redisUserHash: redisUserHash,
   redisBroadcastChannel: redisBroadcastChannel,
@@ -255,5 +285,8 @@ module.exports = {
   deleteUserQuery: deleteUserQuery,
   matchUserQuery: matchUserQuery,
   matchExistingQuery: matchExistingQuery,
-  stats: stats
+  stats: stats,
+  redisApiHash: redisApiHash,
+  createApiUser: createApiUser,
+  redisApiUsers: redisApiUsers
 }

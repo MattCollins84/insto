@@ -10,6 +10,9 @@ var syslog = require('./syslog.js');
 // file system module to access system commands
 var fs = require('fs');
 
+// couch DB users collection
+var db = require("./cloudant.js").users;
+
 /*
  * Define some generic functions to handle
  * standard responses from the RESTful API
@@ -57,6 +60,22 @@ var startup = function(port) {
       // and end the connection with the contents of the static file
       res.writeHead(200, {'Content-Type': "text/html"});
       return res.end(data);
+    });
+  });
+  
+  /*
+   *  Create API user
+   *  Create a new API user and return the api key
+   */
+  api.get('/create/user', function(req, res){
+    
+    // use broadcast to send to all sockets
+    user.createApiUser(req.query, function(err, user) { 
+      if (err) {
+        restSend(res, false, err);
+      } else {
+        restSend(res, true, user);
+      }
     });
   });
   
@@ -167,9 +186,30 @@ var startup = function(port) {
   });
 
   // Automatically listen to Pub/Sub channel
-  redisPubSub.on("connect", function(err) {
+  /*redisPubSub.on("connect", function(err) {
     syslog.log("Subscribing to broadcast channel");
     redisPubSub.subscribe(user.redisBroadcastChannel);
+  });*/
+  
+  // load all API users
+  db.all({include_docs: true}, function(err, docs) {
+    if (err) {
+      console.log('** ERROR: could not load API users'); 
+    } else {
+      console.log('** Loading API users into memory');
+      for (i in docs) {
+        
+        var d = docs[i];
+        
+        console.log('Loading: '+d.id);
+        //store api user in hash
+        redisData.hset(user.redisApiHash, d.id, JSON.stringify(d.doc) );
+        
+        // subscribe to api user broadcast channel
+        redisPubSub.subscribe('bcast-'+d.id);
+      }
+      
+    }
   });
   
   /*
@@ -177,21 +217,46 @@ var startup = function(port) {
    *  Message received
    */
   redisPubSub.on("message", function (channel, message) {
-
-    // if this a broadcast message
-    if(channel==user.redisBroadcastChannel) {
-      // send this message to all sockets
-      io.sockets.volatile.emit('notification', JSON.parse(message));
-    } 
     
-    // if targetted at individual user(s)
-    else {
+    // broadcast
+    if (channel.substring(0, 6) == 'bcast-') {
       
+      var bits = channel.split('-');
+      var channel = bits[1];
+      
+      // remove from collection of api users for broadcasting
+      redisData.get(user.redisApiUsers, function(err, obj) {
+        
+        if (obj == null) {
+          obj = {};
+        } else {
+          obj = JSON.parse(obj);
+        }
+        
+        if (typeof obj[channel] == 'object') {
+          
+          for (i in obj[channel]) {
+            
+            var c = obj[channel][i];
+            
+            if(io.sockets.sockets[c]) {
+              io.sockets.sockets[c].volatile.emit('notification', JSON.parse(message));      
+            }
+            
+          }
+          
+        }
+        
+      });
+      
+    }
+    
+    // direct
+    else {
       // if this socket exists, attempt to send message
       if(io.sockets.sockets[channel]) {
         io.sockets.sockets[channel].volatile.emit('notification', JSON.parse(message));      
       }
-      
     }
   });
   
@@ -226,142 +291,231 @@ var startup = function(port) {
       syslog.log('Received identity');
       
       /*
-       *  SETUP the newly connected user
+       *  Verify the API key supplied
        */
-      
-      // subscribe to this users pubsub channel in redis
-      redisPubSub.subscribe(socket.id);
-
-      // store user data in redis
-      if (identity.userData) {
-        // add user to the user array
-        if(user.addUser(identity.userData, socket.id)) {
-          syslog.log("Insto: Received identity packet");
+      redisData.hget(user.redisApiHash, identity.apiKey, function(err, obj) {
+        
+        // if no matching API key found, force error at client end
+        if (obj == null) {
+          socket.emit('api-fail', {});
         }
-      }
-      
-      // if this guy has a user query
-      if (identity.userQuery && typeof identity.userQuery == "object") {
         
-        // save user query to redis
-        user.saveUserQuery(identity.userQuery, socket.id);
-        
-        // try to find matches for this user query from the existing users, and return to this socket
-        user.matchUserQuery(identity.userQuery, socket.id, function(matches) {
-          socket.emit('instousersconnected', matches);
-        });
-
-      }
-      
-      
-      // now check to see if this user matches any existing queries
-      redisData.hgetall(user.redisQueryHash, function (err, obj) {
-        
-        // loop through the queries
-        for (sessionId in obj) {
+        // otherwise continue setup of client
+        else {
           
-          // get our query object
-          var q = JSON.parse(obj[sessionId]);
+          var apiUser = JSON.parse(obj);
+          /*
+           *  SETUP the newly connected user
+           */
           
-          if (sessionId != socket.id) {
-            // check to see if it matches and send
-            user.matchExistingQuery(q, identity.userData, function() {
-              io.sockets.sockets[sessionId].volatile.emit('instoconnect', identity.userData);
+          // subscribe to this users pubsub channel in redis
+          redisPubSub.subscribe(socket.id);
+          
+          // create a collection of api users for broadcasting
+          redisData.get(user.redisApiUsers, function(err, obj) {
+            
+            if (obj == null) {
+              obj = {};
+            } else {
+              obj = JSON.parse(obj);
+            }
+            
+            if (typeof obj[identity.apiKey] != 'object') {
+              obj[identity.apiKey] = [];
+            }
+            
+            if (obj[identity.apiKey].indexOf(socket.id) == -1) {
+              obj[identity.apiKey].push(socket.id);
+            }
+            
+            redisData.set(user.redisApiUsers, JSON.stringify(obj), function(err, data) {
+              
             });
+            
+          });
+
+          // store user data in redis
+          if (identity.userData) {
+            
+            // add API key to userData
+            identity.userData._apiKey = identity.apiKey;
+            
+            // add user to the user array
+            if(user.addUser(identity.userData, socket.id)) {
+              syslog.log("Insto: Received identity packet");
+            }
           }
-        
-        }
-      
-      });
-
-    });
-    
-    
-    /*
-     *  Websocket API
-     *  Handle Websocket API requests
-     */
-    
-    
-    // if we receive a websocket API-Send call
-    socket.on('api-send', function(data) {
-    
-      /*
-       *  data must be a JS object in this format
-       *  data['_query']  - query to identify user
-       *  data['_msg']    - a JS object to send to the matched user
-       */
-      syslog.log("Insto: Received send request");
-      var sts = (data['_sendToSelf'])?true:socket.id;
-
-      user.sendMessage(data['_query'], data['_msg'], sts, function() {});
-    });
-    
-    
-    // if we receive a websocket API-Broadcast call
-    socket.on('api-broadcast', function(data) {
-    
-      /*
-       *  data must be a JS object in this format
-       *  data['_msg']  - a JS object to send to the matched user
-       */
-      syslog.log("Insto: Received broadcast request");
-      user.sendBroadcast(data['_msg'], function() {});
-    });
-    
-    // if we receive a one off query request
-    socket.on('api-query', function(query) {
-      
-      /*
-       *  data must be a JS object in this format
-       */
-      syslog.log("Insto: Received query request");
-      user.matchUserQuery(query, socket.id, function(matches) {
-        // attempt to send message to specified user of group of users
-        socket.volatile.emit('instoquery', matches);
-      });
-    });
-    
-    /*
-     *  When a socket disconnects
-     */
-    socket.on('disconnect', function () {
-      syslog.log('User disconnected');
-      
-      //get our userData and send out any matching disconnect messages
-      user.getUserBySessionId(this.id, function(userData) {
-        console.log(userData);
-        // now check to see if this user matches any existing queries
-        redisData.hgetall(user.redisQueryHash, function (err, obj) {
           
-          // loop through the queries
-          for (sessionId in obj) {
+          // if this guy has a user query
+          if (identity.userQuery && typeof identity.userQuery == "object") {
             
-            // get our query object
-            var q = JSON.parse(obj[sessionId]);
+            // save user query to redis
+            user.saveUserQuery(identity.userQuery, socket.id);
             
-            if (sessionId != socket.id) {
-              // check to see if it matches and send
-              user.matchExistingQuery(q, userData, function() {
-                io.sockets.sockets[sessionId].volatile.emit('instodisconnect', userData);
-              });
+            // try to find matches for this user query from the existing users, and return to this socket
+            user.matchUserQuery(identity.userQuery, socket.id, function(matches) {
+              socket.emit('instousersconnected', matches);
+            });
+
+          }
+          
+          
+          // now check to see if this user matches any existing queries
+          redisData.hgetall(user.redisQueryHash, function (err, obj) {
+            
+            // loop through the queries
+            for (sessionId in obj) {
+              
+              // get our query object
+              var q = JSON.parse(obj[sessionId]);
+              
+              if (sessionId != socket.id) {
+                // check to see if it matches and send
+                user.matchExistingQuery(q, identity.userData, function() {
+                  io.sockets.sockets[sessionId].volatile.emit('instoconnect', identity.userData);
+                });
+              }
+            
             }
           
-          }
+          });
+          
+          /*
+           *  Websocket API
+           *  Handle Websocket API requests
+           */
+          
+          
+          // if we receive a websocket API-Send call
+          socket.on('api-send', function(data) {
+          
+            /*
+             *  data must be a JS object in this format
+             *  data['_query']  - query to identify user
+             *  data['_msg']    - a JS object to send to the matched user
+             */
+            syslog.log("Insto: Received send request");
+            var sts = (data['_sendToSelf'])?true:socket.id;
+
+            user.sendMessage(data['_query'], data['_msg'], sts, function() {});
+          });
+          
+          
+          // if we receive a websocket API-Broadcast call
+          socket.on('api-broadcast', function(data) {
+          
+            /*
+             *  data must be a JS object in this format
+             *  data['_msg']  - a JS object to send to the matched user
+             */
+            syslog.log("Insto: Received broadcast request");
+            
+            user.sendBroadcast(data['_apiKey'], data['_msg'], function() {});
+          });
+          
+          // if we receive a one off query request
+          socket.on('api-query', function(query) {
+            
+            /*
+             *  data must be a JS object in this format
+             */
+            syslog.log("Insto: Received query request");
+            user.matchUserQuery(query, socket.id, function(matches) {
+              // attempt to send message to specified user of group of users
+              socket.volatile.emit('instoquery', matches);
+            });
+          });
+          
+          /*
+           *  When a socket disconnects
+           */
+          socket.on('disconnect', function () {
+            syslog.log('User disconnected');
+            
+            
+            // remove from collection of api users for broadcasting
+            redisData.get(user.redisApiUsers, function(err, obj) {
+              
+              if (obj == null) {
+                obj = {};
+              } else {
+                obj = JSON.parse(obj);
+              }
+              
+              // loop over all api key groups
+              var found = false;
+              for (i in obj) {
+                
+                if (typeof obj[i] == 'object' && obj[i].length) {
+
+                  for (j in obj[i]) {
+                    
+                    console.log(obj[i][j], socket.id);
+                    if (obj[i][j] == socket.id) {
+                      found = j;
+                      break;
+                    }
+                    
+                  }
+                  
+                  if (found) {
+                    obj[i].splice(found, 1);
+                    break;
+                  }
+                  
+                }
+                
+              }
+              
+              
+              
+              redisData.set(user.redisApiUsers, JSON.stringify(obj), function(err, data) {
+                
+              });
+              
+            });
+            
+            //get our userData and send out any matching disconnect messages
+            user.getUserBySessionId(this.id, function(userData) {
+              console.log(userData);
+              // now check to see if this user matches any existing queries
+              redisData.hgetall(user.redisQueryHash, function (err, obj) {
+                
+                // loop through the queries
+                for (sessionId in obj) {
+                  
+                  // get our query object
+                  var q = JSON.parse(obj[sessionId]);
+                  
+                  if (sessionId != socket.id) {
+                    // check to see if it matches and send
+                    user.matchExistingQuery(q, userData, function() {
+                      io.sockets.sockets[sessionId].volatile.emit('instodisconnect', userData);
+                    });
+                  }
+                
+                }
+              
+              });
+              
+            });
+            
+            // remove this from our array of users
+            user.removeUserBySessionId(this.id);
+
+            // unsubscribe to this pubsub channel, because this socket has gone away
+            redisPubSub.unsubscribe(socket.id);
+            
+            // remove user query
+            user.deleteUserQuery(socket.id);
+            
+          });
         
-        });
-        
+        }
       });
       
-      // remove this from our array of users
-      user.removeUserBySessionId(this.id);
+      
 
-      // unsubscribe to this pubsub channel, because this socket has gone away
-      redisPubSub.unsubscribe(socket.id);
-      
-      // remove user query
-      user.deleteUserQuery(socket.id);
-      
     });
 
   });

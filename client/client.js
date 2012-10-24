@@ -3,13 +3,21 @@
  *  This will be included in the client side
  *  To provide Websocket API features
  */
-function InstoClient(userData, userQuery, callback, host) {
+function InstoClient(apiKey, userData, userQuery, callback, host) {
   
   /*
    *  Validation
    *  Check that we have the required information provided 
    */
-   
+  
+  //make sure we have an API key 
+  if (typeof apiKey != "string") {
+    throw 'Insto: You must supply a valid API key';
+    return;
+  }
+  
+  this._apiKey = apiKey
+  
   //check that userData is passed in
   if (typeof userData != "object") {
     throw 'Insto: You must supply a valid Javascript object in the first parameter';
@@ -19,6 +27,8 @@ function InstoClient(userData, userQuery, callback, host) {
   //see if we have a user query
   if (typeof userQuery != "object") {
     userQuery = false;
+  } else {
+    userQuery._apiKey = this._apiKey;
   }
   
   //check we have a host value
@@ -42,7 +52,13 @@ function InstoClient(userData, userQuery, callback, host) {
   
   // handle identify
   socket.on('identify', function(data) {
-    socket.emit('identity', { "userData": userData, "userQuery": userQuery });
+    socket.emit('identity', { "apiKey": apiKey, "userData": userData, "userQuery": userQuery });
+  });
+  
+  // listen forr API key failure
+  socket.on('api-fail', function(data) {
+    throw 'Insto: You must supply a valid API key';
+    return;
   });
   
   // listen for incoming messages and send to callback
@@ -93,6 +109,9 @@ function InstoClient(userData, userQuery, callback, host) {
       throw 'Insto: Invalid query object';
     }
     
+    // add apikey to query object
+    query._apiKey = this._apiKey;
+    
     if (typeof msg != "object") {
       msg = {};
     }
@@ -119,6 +138,7 @@ function InstoClient(userData, userQuery, callback, host) {
     var obj = new Object;
     obj['_msg'] = new Object;
     obj['_msg']['msg'] = msg;
+    obj['_apiKey'] = this._apiKey;
     
     //send our object
     socket.emit('api-broadcast', obj);
@@ -127,7 +147,10 @@ function InstoClient(userData, userQuery, callback, host) {
   
   // handle query websocket API call
   this.query = function(query) {
-
+    
+    // add apikey to query object
+    query._apiKey = this._apiKey;
+    
     //send our object
     socket.emit('api-query', query);
     

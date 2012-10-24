@@ -63,6 +63,8 @@ redisClient.on("connect", function (err) {
   if (conAttempt == 1) {
     redisClient.del(user.redisUserHash);
     redisClient.del(user.redisQueryHash);
+    redisClient.del(user.redisApiHash);
+    redisClient.del(user.redisApiUsers);
   }
   
   conAttempt++;
