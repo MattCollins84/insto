@@ -124,7 +124,7 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
     var obj = new Object;
     obj['_query'] = query;
     obj['_msg'] = new Object;
-    obj['_msg']['msg'] = msg;
+    obj['_msg'] = msg;
     obj['_sendToSelf'] = (sendToSelf)?true:false;
 
     //send our object
@@ -137,7 +137,7 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
     
     var obj = new Object;
     obj['_msg'] = new Object;
-    obj['_msg']['msg'] = msg;
+    obj['_msg'] = msg;
     obj['_apiKey'] = this._apiKey;
     
     //send our object

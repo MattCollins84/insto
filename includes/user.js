@@ -82,7 +82,7 @@ var sendMessage = function(query, msg, sendToSelf, callback) {
       // attempt a match if required and send the message
       var matches = false;
       
-      if (sendToSelf === true || (!sendToSelf && sessionId != sendToSelf) ) {
+      if (sendToSelf === true || (sessionId != sendToSelf) ) {
         matches = calculateUserQueryMatch(query, u);
       }
       
@@ -198,7 +198,7 @@ var matchUserQuery = function(query, socketId, callback) {
         
         // if we have a match, add this user the returned array
         if (match) {
-
+          delete u._apiKey;
           users.push(u);
           
         }
@@ -225,7 +225,11 @@ var matchExistingQuery = function(query, user, callback) {
   // if we have a match, do the callback
   if (match) {
 
-    callback();
+    callback(true);
+    
+  } else {
+    
+    callback(false);
     
   }
   

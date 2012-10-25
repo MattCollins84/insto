@@ -109,13 +109,13 @@ var startup = function(port) {
    *  BROADCAST
    *  Broadcast API method
    */
-  api.get('/message/all', function(req, res){
+  api.get('/:apikey/message/all', function(req, res){
 
     // send broadcast message to all clients
-    syslog.log("Insto: Broadcastmessage sent");
+    syslog.log("Insto: Broadcast message sent");
 
     // use broadcast to send to all sockets
-    user.sendBroadcast(req.query, function(err) { 
+    user.sendBroadcast(req.params.apikey, req.query, function(err) { 
         restSend(res, err);
     });
 
@@ -125,7 +125,7 @@ var startup = function(port) {
    *  SEND MESSAGE
    *  Send message to all matching users
    */
-  api.get('/message/to/:key/:value', function(req, res) {
+  api.get('/:apikey/message/to/:key/:value', function(req, res) {
 
     // log the request
     syslog.log("Insto: send message "+req.route.path);
@@ -133,9 +133,10 @@ var startup = function(port) {
     // format query
     var userQuery = new Object;
     userQuery[req.params.key] = req.params.value;
-
+    userQuery._apiKey = req.params.apikey;
+    
     // attempt to send message to specified user of group of users
-    user.sendMessage(userQuery, req.query, function(status) {
+    user.sendMessage(userQuery, req.query, false, function(status) {
         restSend(res, status);
     });
 
@@ -144,12 +145,15 @@ var startup = function(port) {
   /*
    * Find users that match a supplied query
    */
-  api.get('/query', function(req, res) {
+  api.get('/:apikey/query', function(req, res) {
 
     // log the request
     syslog.log("Insto: query API request");
-
-    user.matchUserQuery(req.query, null, function(matches) {
+    
+    var q = req.query;
+    q._apiKey = req.params.apikey;
+    
+    user.matchUserQuery(q, null, function(matches) {
       restSend(res, true, matches);
     }); 
 
@@ -371,8 +375,10 @@ var startup = function(port) {
               
               if (sessionId != socket.id) {
                 // check to see if it matches and send
-                user.matchExistingQuery(q, identity.userData, function() {
-                  io.sockets.sockets[sessionId].volatile.emit('instoconnect', identity.userData);
+                user.matchExistingQuery(q, identity.userData, function(success) {
+                  if (success) {
+                    io.sockets.sockets[sessionId].volatile.emit('instoconnect', identity.userData);
+                  }
                 });
               }
             
