@@ -76,12 +76,12 @@
           complete++;
         }
         
-        if (typeof data.msg != "undefined" && typeof data.msg.test == "string") {
+        if (typeof data.test == "string") {
           $('message').addClassName('success');
           complete++;
         }
         
-        if (typeof data.msg != "undefined" && typeof data.msg.bcast == "string") {
+        if (typeof data.bcast == "string") {
           $('broadcast').addClassName('success');
           complete++;
         }
@@ -94,7 +94,7 @@
       }
                       
       //connect to insto
-      var i = new InstoClient(user1, query1, callback);
+      var i = new InstoClient('key', user1, query1, callback);
       
       setTimeout(function() {
         i.send(query1, {"test": "From 1 > 2"}, true);
