@@ -31,8 +31,6 @@ var getUserBySessionId = function(sessionId, callback) {
   
   redisClient.hget(redisUserHash, sessionId, function(err, obj) {
     
-    console.log(redisUserHash, sessionId);
-    
     //if we don't have a callback
     if (typeof callback != "function") {
       syslog.log('Insto: getUserBySessionId - no callback');
@@ -72,10 +70,10 @@ var sendMessage = function(query, msg, sendToSelf, callback) {
   
   // get the whole user hash from redis
   redisClient.hgetall(redisUserHash, function (err, obj) {
-  
+    
     // iterate through the hash
     for(sessionId in obj) {
-    
+      
       // parse the JSON
       var u = JSON.parse(obj[sessionId]);
       
@@ -126,6 +124,10 @@ var calculateUserQueryMatch = function(query, user) {
   var match = true;
   
   for (key in query) {
+    
+    if (key.substring(0, 1) == "_") {
+      continue;
+    }
     
     // if this user doesn't have a specified key, or the specified key doesn't match - then return no match
     if (typeof user[key] == "undefined" ||  user[key] != query[key]) {

@@ -5,6 +5,8 @@
  */
 function InstoClient(apiKey, userData, userQuery, callback, host) {
   
+  var _c;
+  
   /*
    *  Validation
    *  Check that we have the required information provided 
@@ -12,14 +14,17 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
   
   //make sure we have an API key 
   if (typeof apiKey != "string") {
+    _c = false;
     throw 'Insto: You must supply a valid API key';
     return;
   }
   
   this._apiKey = apiKey
+  this._hostname = window.location.hostname;
   
   //check that userData is passed in
   if (typeof userData != "object") {
+    _c = false;
     throw 'Insto: You must supply a valid Javascript object in the first parameter';
     return;
   }
@@ -52,12 +57,13 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
   
   // handle identify
   socket.on('identify', function(data) {
-    socket.emit('identity', { "apiKey": apiKey, "userData": userData, "userQuery": userQuery });
+    socket.emit('identity', { "auth": {"apiKey": apiKey, "hostname": window.location.hostname}, "userData": userData, "userQuery": userQuery });
   });
   
   // listen forr API key failure
   socket.on('api-fail', function(data) {
-    throw 'Insto: You must supply a valid API key';
+    _c = false;
+    throw 'Insto: '+data.msg;
     return;
   });
   
@@ -107,6 +113,12 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
     
     if (typeof query != "object") {
       throw 'Insto: Invalid query object';
+      return;
+    }
+    
+    if (_c === false) {
+      throw 'Insto: not connected';
+      return;
     }
     
     // add apikey to query object
@@ -135,6 +147,11 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
   // broadcast websocket API call
   this.broadcast = function(msg) {
     
+    if (_c === false) {
+      throw 'Insto: not connected';
+      return;
+    }
+    
     var obj = new Object;
     obj['_msg'] = new Object;
     obj['_msg'] = msg;
@@ -147,6 +164,11 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
   
   // handle query websocket API call
   this.query = function(query) {
+    
+    if (_c === false) {
+      throw 'Insto: ot connected';
+      return;
+    }
     
     // add apikey to query object
     query._apiKey = this._apiKey;

@@ -205,6 +205,10 @@ var startup = function(port) {
         
         var d = docs[i];
         
+        if (d.id.substring(0,1) == "_") {
+          continue;
+        }
+        
         console.log('Loading: '+d.id);
         //store api user in hash
         redisData.hset(user.redisApiHash, d.id, JSON.stringify(d.doc) );
@@ -297,17 +301,23 @@ var startup = function(port) {
       /*
        *  Verify the API key supplied
        */
-      redisData.hget(user.redisApiHash, identity.apiKey, function(err, obj) {
+      redisData.hget(user.redisApiHash, identity.auth.apiKey, function(err, obj) {
+        
+        var apiUser = JSON.parse(obj);
         
         // if no matching API key found, force error at client end
-        if (obj == null) {
-          socket.emit('api-fail', {});
+        if (apiUser == null) {
+          socket.emit('api-fail', {"msg": "Invalid API key"});
+        }
+        
+        // check we have the correct hostname for the key
+        else if (apiUser.hostname != identity.auth.hostname) {
+          socket.emit('api-fail', {"msg": "Invalid API key for this host."});
         }
         
         // otherwise continue setup of client
         else {
-          
-          var apiUser = JSON.parse(obj);
+          ;
           /*
            *  SETUP the newly connected user
            */
@@ -324,12 +334,12 @@ var startup = function(port) {
               obj = JSON.parse(obj);
             }
             
-            if (typeof obj[identity.apiKey] != 'object') {
-              obj[identity.apiKey] = [];
+            if (typeof obj[identity.auth.apiKey] != 'object') {
+              obj[identity.auth.apiKey] = [];
             }
             
-            if (obj[identity.apiKey].indexOf(socket.id) == -1) {
-              obj[identity.apiKey].push(socket.id);
+            if (obj[identity.auth.apiKey].indexOf(socket.id) == -1) {
+              obj[identity.auth.apiKey].push(socket.id);
             }
             
             redisData.set(user.redisApiUsers, JSON.stringify(obj), function(err, data) {
@@ -456,7 +466,6 @@ var startup = function(port) {
 
                   for (j in obj[i]) {
                     
-                    console.log(obj[i][j], socket.id);
                     if (obj[i][j] == socket.id) {
                       found = j;
                       break;
@@ -483,7 +492,7 @@ var startup = function(port) {
             
             //get our userData and send out any matching disconnect messages
             user.getUserBySessionId(this.id, function(userData) {
-              console.log(userData);
+              
               // now check to see if this user matches any existing queries
               redisData.hgetall(user.redisQueryHash, function (err, obj) {
                 
