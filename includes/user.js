@@ -273,6 +273,9 @@ var createApiUser = function(user, callback) {
     messages.push("You must supply a hostname");
   }
   
+  //remove un-needed prefixes from hostname
+  user.hostname = user.hostname.replace("http://", "").replace("https://", "").replace("www.", "");
+  
   if (messages.length == 0) {
         
     // generate api key

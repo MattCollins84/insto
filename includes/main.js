@@ -303,6 +303,9 @@ var startup = function(port) {
        */
       redisData.hget(user.redisApiHash, identity.auth.apiKey, function(err, obj) {
         
+        //format the hostname
+        identity.auth.hostname = identity.auth.hostname.replace("http://", "").replace("https://", "").replace("www.", "");
+        
         var apiUser = JSON.parse(obj);
         
         // if no matching API key found, force error at client end
