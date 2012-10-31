@@ -67,7 +67,7 @@ var startup = function(port) {
    *  Create API user
    *  Create a new API user and return the api key
    */
-  api.get('/create/user', function(req, res){
+  api.get('/user/create', function(req, res){
     
     // use broadcast to send to all sockets
     user.createApiUser(req.query, function(err, user) { 

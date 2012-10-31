@@ -273,11 +273,13 @@ var createApiUser = function(user, callback) {
     messages.push("You must supply a hostname");
   }
   
-  //remove un-needed prefixes from hostname
-  user.hostname = user.hostname.replace("http://", "").replace("https://", "").replace("www.", "");
+  
   
   if (messages.length == 0) {
-        
+    
+    //remove un-needed prefixes from hostname
+    user.hostname = user.hostname.replace("http://", "").replace("https://", "").replace("www.", "");    
+    
     // generate api key
     var d = new Date;
     var t = d.getTime();
@@ -296,8 +298,8 @@ var createApiUser = function(user, callback) {
       // no errors!
       else {
         
-        // do we have 5 docs for this email already?
-        if (docs.length == 5) {
+        // do we have an api key for this email already?
+        if (docs.length >= 1) {
           callback(["Maximum number of API keys already registered"], null);
         }
         
@@ -311,8 +313,16 @@ var createApiUser = function(user, callback) {
             warnings.push("Password changed to match previous entries for this email address");
           }
           
-          db.save(apikey, user, function() {
-            callback(null, {"apikey": apikey, "warnings": warnings});
+          db.save(apikey, user, function(err, res) {
+            
+            if (err) {
+              callback(err, null);
+            } else {
+              
+              redisClient.hset(redisApiHash, apikey, JSON.stringify(user) );
+              
+              callback(null, {"apikey": apikey, "warnings": warnings});
+            }
           });
           
         }
