@@ -4,6 +4,9 @@ var io;
 // include the user class
 var user = require('./user.js');
 
+// include the usage class
+var usage = require('./usage.js');
+
 // include the syslog class
 var syslog = require('./syslog.js');
 
@@ -60,6 +63,22 @@ var startup = function(port) {
       // and end the connection with the contents of the static file
       res.writeHead(200, {'Content-Type': "text/html"});
       return res.end(data);
+    });
+  });
+  
+  /*
+   *  API Usage - number of connections
+   *  Return number of connections for a particular api key
+   */
+  api.get('/usage/:key/connections', function(req, res){
+    
+    // use broadcast to send to all sockets
+    usage.numberOfConnections(req.params.key, function(err, data) { 
+      if (err) {
+        restSend(res, false, err);
+      } else {
+        restSend(res, true, data);
+      }
     });
   });
   
