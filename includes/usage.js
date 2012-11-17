@@ -5,6 +5,9 @@
 // user module
 var user = require('./user.js');
 
+// couch DB usage collection
+var usage = require("./cloudant.js").usage;
+
 // redis
 var redisClient = require("redis").createClient();
 
@@ -41,8 +44,34 @@ var numberOfConnections = function(key, callback) {
   
 }
 
+// number of messages
+var numberOfMessages = function(query, callback) {
+  
+  var from = query.from.split("-");
+  var to = query.to.split("-");
+  
+  console.log(from, to);
+  
+  usage.view('usage/byDate', {startkey: [query.apiKey, parseInt(from[0]), parseInt(from[1]), parseInt(from[2])], endkey: [query.apiKey, parseInt(to[0]), parseInt(to[1]), parseInt(to[2])]}, function (err, res) {
+      
+    // error?
+    if (err) {
+      syslog.log(err);
+      callback(err, null);
+    }
+    
+    // no error
+    else {
+      callback(null, res);
+    }
+      
+  });
+  
+}
+
 
 // export
 module.exports = {
-  numberOfConnections: numberOfConnections
+  numberOfConnections: numberOfConnections,
+  numberOfMessages: numberOfMessages
 }

@@ -83,6 +83,28 @@ var startup = function(port) {
   });
   
   /*
+   *  API Usage - messages sent
+   *  Return number of messages sent between date ranges
+   */
+  api.get('/usage/:key/messages', function(req, res){
+    
+    var query = {
+      "apiKey": req.params.key,
+      "from": req.query.from,
+      "to": req.query.to
+    }
+    
+    // use broadcast to send to all sockets
+    usage.numberOfMessages(query, function(err, data) { 
+      if (err) {
+        restSend(res, false, err);
+      } else {
+        restSend(res, true, data);
+      }
+    });
+  });
+  
+  /*
    *  Create API user
    *  Create a new API user and return the api key
    */
@@ -232,6 +254,9 @@ var startup = function(port) {
         //store api user in hash
         redisData.hset(user.redisApiHash, d.id, JSON.stringify(d.doc) );
         
+        //store usage counter for this api in redos
+        redisData.hset(user.redisApiUsage, d.id, 0);
+        
         // subscribe to api user broadcast channel
         redisPubSub.subscribe('bcast-'+d.id);
       }
@@ -241,7 +266,7 @@ var startup = function(port) {
   
   /*
    *  PUB/SUB
-   *  Message received
+   *  Message received - send to clients
    */
   redisPubSub.on("message", function (channel, message) {
     
@@ -267,7 +292,10 @@ var startup = function(port) {
             var c = obj[channel][i];
             
             if(io.sockets.sockets[c]) {
-              io.sockets.sockets[c].volatile.emit('notification', JSON.parse(message));      
+              io.sockets.sockets[c].volatile.emit('notification', JSON.parse(message));
+              
+              // increment usage counter for this apikey
+              redisData.hincrby(user.redisApiUsage, channel, 1);    
             }
             
           }

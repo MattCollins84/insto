@@ -6,6 +6,7 @@ var redisIndexHash = 'instoIndexHash';
 var redisQueryHash = 'instoQueryHash';
 var redisApiHash = 'instoApiHash';
 var redisApiUsers = 'instoApiUsers';
+var redisApiUsage = 'instoApiUsage';
 
 var syslog = require('./includes/syslog.js');
 
@@ -81,12 +82,18 @@ var sendMessage = function(query, msg, sendToSelf, callback) {
       var matches = false;
       
       if (sendToSelf === true || (sessionId != sendToSelf) ) {
+        console.log(query);
         matches = calculateUserQueryMatch(query, u);
       }
       
       if (matches) {
         // send them a private message by publishing to a pubsub channel on redis
         redisClient.publish(sessionId, msg);
+        
+        // increment usage counter for this apikey
+        redisClient.hincrby(redisApiUsage, query._apiKey, 1);
+        
+        
         retval = true;
       }
 
@@ -355,5 +362,6 @@ module.exports = {
   stats: stats,
   redisApiHash: redisApiHash,
   createApiUser: createApiUser,
-  redisApiUsers: redisApiUsers
+  redisApiUsers: redisApiUsers,
+  redisApiUsage: redisApiUsage
 }

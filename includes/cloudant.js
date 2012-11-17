@@ -13,7 +13,9 @@
                                         );
                                  
   var users = connection.database('users');
+  var usage = connection.database('usage');
   
   module.exports = {
-    users: users
+    users: users,
+    usage: usage
   }
