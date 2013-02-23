@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // include the main application class
 var main = require('./includes/main.js');
 
