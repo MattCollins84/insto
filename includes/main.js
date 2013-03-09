@@ -354,14 +354,14 @@ var startup = function(port) {
         identity.auth.hostname = identity.auth.hostname.replace("http://", "").replace("https://", "").replace("www.", "");
         
         var apiUser = JSON.parse(obj);
-        
+        console.log(apiUser);
         // if no matching API key found, force error at client end
         if (apiUser == null) {
           socket.emit('api-fail', {"msg": "Invalid API key"});
         }
         
         // check we have the correct hostname for the key
-        else if (apiUser.hostname != identity.auth.hostname) {
+        else if (apiUser.hostname != identity.auth.hostname && apiUser.development_hostname != identity.auth.hostname) {
           socket.emit('api-fail', {"msg": "Invalid API key for this host."});
         }
         
