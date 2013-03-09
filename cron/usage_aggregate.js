@@ -66,6 +66,10 @@ var q = async.queue(function (task, callback) {
   callback();
 }, 1);
 
+q.drain(function() {
+	console.log('fin.');
+	process.exit(0);
+});
 
 // get all usage counters
 redisClient.hgetall(user.redisApiUsage, function(err, obj) {
