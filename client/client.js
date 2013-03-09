@@ -1,39 +1,33 @@
 /*
  *  InstoClient
- *  This will be included in the client side
- *  To provide Websocket API features
  */
 function InstoClient(apiKey, userData, userQuery, callback, host) {
   
-  var _c;
+  /*** Code to async load socket.io library ***/
+  this.addEvent = function(elm, evType, fn, useCapture) {
+    //Credit: Function written by Scott Andrews
+    //(slightly modified)
+    var ret = 0;
   
-  /*
-   *  Validation
-   *  Check that we have the required information provided 
-   */
+    if (elm.addEventListener) {
+        ret = elm.addEventListener(evType, fn, useCapture);
+    } else if (elm.attachEvent) {
+        ret = elm.attachEvent('on' + evType, fn);
+    } else {
+        elm['on' + evType] = fn;
+    }
   
-  //make sure we have an API key 
-  if (typeof apiKey != "string") {
-    _c = false;
-    throw 'Insto: You must supply a valid API key';
-    return;
-  }
-  
-  this._apiKey = apiKey
-  this._hostname = window.location.hostname;
-  
-  //check that userData is passed in
-  if (typeof userData != "object") {
-    _c = false;
-    throw 'Insto: You must supply a valid Javascript object in the first parameter';
-    return;
-  }
-  
-  //see if we have a user query
-  if (typeof userQuery != "object") {
-    userQuery = false;
-  } else {
-    userQuery._apiKey = this._apiKey;
+    return ret;
+  };
+
+  this.load = function(src, callback) {
+    var a = document.createElement('script');
+    a.type = 'text/javascript';
+    a.src = src;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(a, s);
+    
+    this.addEvent(a, 'load', callback, false);
   }
   
   //check we have a host value
@@ -46,63 +40,96 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
     callback = function(data) {};
   }
   
-  /*
-   *  Connect to Socket.IO server
-   */
-  var socket = io.connect(host); //our socket.io object
+  var _c;
+  var socket;
   
-  /*
-   *  Handle Socket.IO events
-   */
-  
-  // handle identify
-  socket.on('identify', function(data) {
-    socket.emit('identity', { "auth": {"apiKey": apiKey, "hostname": window.location.hostname}, "userData": userData, "userQuery": userQuery });
+  this.load(host+"/socket.io/socket.io.js", function() {
+		/*
+		 *  Validation
+		 *  Check that we have the required information provided 
+		 */
+	
+		//make sure we have an API key 
+		if (typeof apiKey != "string") {
+			_c = false;
+			throw 'Insto: You must supply a valid API key';
+			return;
+		}
+	
+		this._apiKey = apiKey
+		this._hostname = window.location.hostname;
+	
+		//check that userData is passed in
+		if (typeof userData != "object") {
+			_c = false;
+			throw 'Insto: You must supply a valid Javascript object in the userData parameter';
+			return;
+		}
+	
+		//see if we have a user query
+		if (typeof userQuery != "object") {
+			userQuery = false;
+		} else {
+			userQuery._apiKey = this._apiKey;
+		}
+	
+		/*
+		 *  Connect to Socket.IO server
+		 */
+		socket = io.connect(host); //our socket.io object
+	
+		/*
+		 *  Handle Socket.IO events
+		 */
+	
+		// handle identify
+		socket.on('identify', function(data) {
+			socket.emit('identity', { "auth": {"apiKey": apiKey, "hostname": window.location.hostname}, "userData": userData, "userQuery": userQuery });
+		});
+	
+		// listen forr API key failure
+		socket.on('api-fail', function(data) {
+			_c = false;
+			throw 'Insto: '+data.msg;
+			return;
+		});
+	
+		// listen for incoming messages and send to callback
+		socket.on('notification', function(msg) {
+			msg._type = "notification";
+			callback(msg);
+		});
+	
+		// listen for incoming connection query matches
+		socket.on('instousersconnected', function(msg) {
+		
+			var obj = new Object;
+			obj._type = "connectedusers"
+			obj.users = msg;
+			callback(obj);
+		});
+	
+		// listen for incoming connection query matches
+		socket.on('instoconnect', function(msg) {
+			msg._type = "connect";
+			callback(msg);
+		});
+	
+		// listen for incoming disconnection query matches
+		socket.on('instodisconnect', function(msg) {
+			msg._type = "disconnect";
+			callback(msg);
+		});
+	
+		// listen for incoming disconnection query matches
+		socket.on('instoquery', function(msg) {
+		
+			var obj = new Object;
+			obj._type = "query";
+			obj.users = msg;
+			callback(obj);
+		});
   });
-  
-  // listen forr API key failure
-  socket.on('api-fail', function(data) {
-    _c = false;
-    throw 'Insto: '+data.msg;
-    return;
-  });
-  
-  // listen for incoming messages and send to callback
-  socket.on('notification', function(msg) {
-    msg._type = "notification";
-    callback(msg);
-  });
-  
-  // listen for incoming connection query matches
-  socket.on('instousersconnected', function(msg) {
-    
-    var obj = new Object;
-    obj._type = "connectedusers"
-    obj.users = msg;
-    callback(obj);
-  });
-  
-  // listen for incoming connection query matches
-  socket.on('instoconnect', function(msg) {
-    msg._type = "connect";
-    callback(msg);
-  });
-  
-  // listen for incoming disconnection query matches
-  socket.on('instodisconnect', function(msg) {
-    msg._type = "disconnect";
-    callback(msg);
-  });
-  
-  // listen for incoming disconnection query matches
-  socket.on('instoquery', function(msg) {
-    
-    var obj = new Object;
-    obj._type = "query";
-    obj.users = msg;
-    callback(obj);
-  });
-  
   
   /*
    *  Websocket API methods
@@ -166,7 +193,7 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
   this.query = function(query) {
     
     if (_c === false) {
-      throw 'Insto: ot connected';
+      throw 'Insto: not connected';
       return;
     }
     
