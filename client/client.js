@@ -42,7 +42,9 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
   
   var _c;
   var socket;
-  
+  var _apiKey = apiKey
+	var _hostname = window.location.hostname;
+		
   this.load(host+"/socket.io/socket.io.js", function() {
 		/*
 		 *  Validation
@@ -56,9 +58,6 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
 			return;
 		}
 	
-		this._apiKey = apiKey
-		this._hostname = window.location.hostname;
-	
 		//check that userData is passed in
 		if (typeof userData != "object") {
 			_c = false;
@@ -70,7 +69,7 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
 		if (typeof userQuery != "object") {
 			userQuery = false;
 		} else {
-			userQuery._apiKey = this._apiKey;
+			userQuery._apiKey = _apiKey;
 		}
 	
 		/*
@@ -149,7 +148,7 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
     }
     
     // add apikey to query object
-    query._apiKey = this._apiKey;
+    query._apiKey = _apiKey;
     
     if (typeof msg != "object") {
       msg = {};
@@ -182,7 +181,7 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
     var obj = new Object;
     obj['_msg'] = new Object;
     obj['_msg'] = msg;
-    obj['_apiKey'] = this._apiKey;
+    obj['_apiKey'] = _apiKey;
     
     //send our object
     socket.emit('api-broadcast', obj);
@@ -198,7 +197,7 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
     }
     
     // add apikey to query object
-    query._apiKey = this._apiKey;
+    query._apiKey = _apiKey;
     
     //send our object
     socket.emit('api-query', query);
