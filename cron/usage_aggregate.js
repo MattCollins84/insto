@@ -67,6 +67,7 @@ var q = async.queue(function (task, callback) {
 }, 1);
 
 q.drain(function() {
+	redisClient.del(user.redisApiUsage);
 	console.log('fin.');
 	process.exit(0);
 });
