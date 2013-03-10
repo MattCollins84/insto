@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // define redis keys and create redis connection for user class
 var redisClient = require("redis").createClient();
 
@@ -86,7 +88,7 @@ redisClient.hgetall(user.redisApiUsage, function(err, obj) {
   }
   
   // no error
-  else {
+  else if (obj) { 
     
     len = Object.keys(obj).length;
     console.log(len);
@@ -96,6 +98,11 @@ redisClient.hgetall(user.redisApiUsage, function(err, obj) {
       q.push({key: key, num: obj[key]});
     }
     
+  }
+  
+  else {
+  	console.log('Nothing to process');
+  	process.exit(0);
   }
   
 });
