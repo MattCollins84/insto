@@ -1,6 +1,5 @@
 <html>
   <head>
-    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
     <script type="text/javascript" src="/lib/client.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/prototype/1.7.1.0/prototype.js"></script>
     <style type='text/css'>
@@ -94,7 +93,7 @@
       }
                       
       //connect to insto
-      var i = new InstoClient('test_api', user1, query1, callback);
+      var i = new InstoClient('test_api', user1, query1, callback, "http://"+window.location.hostname+":3000");
       
       setTimeout(function() {
         i.send(query1, {"test": "From 1 > 2"}, true);

@@ -18,8 +18,12 @@ var m = moment();
 //async library
 var async = require('async');
 
+var len;
+var complete = 0;
 // setup the queue
 var q = async.queue(function (task, callback) {
+  
+  complete++;
   
   // attempt to get existing usage doc
   usage.get(task.key, function(err, doc) {
@@ -58,6 +62,13 @@ var q = async.queue(function (task, callback) {
     usage.save(task.key, saveDoc, function(err, doc) {
         
         console.log(doc, err);
+        redisClient.hdel(user.redisApiUsage, task.key);
+        
+        console.log(complete, len);
+        if (complete == len) {
+        	console.log('fin.');
+        	process.exit(0);
+        }
         
     });
     
@@ -65,12 +76,6 @@ var q = async.queue(function (task, callback) {
   
   callback();
 }, 1);
-
-q.drain = function() {
-	redisClient.del(user.redisApiUsage);
-	console.log('fin.');
-	process.exit(0);
-};
 
 // get all usage counters
 redisClient.hgetall(user.redisApiUsage, function(err, obj) {
@@ -82,6 +87,9 @@ redisClient.hgetall(user.redisApiUsage, function(err, obj) {
   
   // no error
   else {
+    
+    len = Object.keys(obj).length;
+    console.log(len);
     
     // for each API key
     for (key in obj) {
