@@ -526,6 +526,7 @@ var startup = function(port) {
                     
                   }
                   
+                  // once we've fund this socket, remove from the store
                   if (found) {
                     obj[i].splice(found, 1);
                     break;
@@ -535,8 +536,7 @@ var startup = function(port) {
                 
               }
               
-              
-              
+              // write it back to redis
               redisData.set(user.redisApiUsers, JSON.stringify(obj), function(err, data) {
                 
               });
@@ -557,8 +557,10 @@ var startup = function(port) {
                   
                   if (sessionId != socket.id) {
                     // check to see if it matches and send
-                    user.matchExistingQuery(q, userData, function() {
-                      io.sockets.sockets[sessionId].volatile.emit('instodisconnect', userData);
+                    user.matchExistingQuery(q, userData, function(success) {
+                      if (success) {
+                      	io.sockets.sockets[sessionId].volatile.emit('instodisconnect', userData);
+                      }
                     });
                   }
                 
