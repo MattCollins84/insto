@@ -367,10 +367,12 @@ var startup = function(port) {
         
         // otherwise continue setup of client
         else {
-          ;
+          
           /*
            *  SETUP the newly connected user
            */
+          
+          socket.emit('connected', {"_type": "connected", _id: socket.id});
           
           // subscribe to this users pubsub channel in redis
           redisPubSub.subscribe(socket.id);
@@ -403,6 +405,7 @@ var startup = function(port) {
             
             // add API key to userData
             identity.userData._apiKey = identity.apiKey;
+            identity.userData._id = socket.id;
             
             // add user to the user array
             if(user.addUser(identity.userData, socket.id)) {

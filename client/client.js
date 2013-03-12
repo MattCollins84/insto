@@ -86,6 +86,12 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
 			socket.emit('identity', { "auth": {"apiKey": apiKey, "hostname": window.location.hostname}, "userData": userData, "userQuery": userQuery });
 		});
 	
+		// listen for connection notification
+		socket.on('connected', function(data) {
+			callback(data);
+			return;
+		});
+		
 		// listen forr API key failure
 		socket.on('api-fail', function(data) {
 			_c = false;
