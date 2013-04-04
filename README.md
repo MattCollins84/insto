@@ -1,62 +1,35 @@
 # Insto
 
-Insto is a prototype application designed to provide real-time functionality to existing IT systems.
+Insto is a Node.JS based application designed to provide real-time websocket functionality to websites via a Websocket API; exposed via a Javascript library, or a RESTful API.
 
-Throughout this documentation the assumption is made that the Insto server is running on the hostname 'http://insto' using port '3000'.
+Insto was created as part of a final year project at Teesside University.
 
-There are five key areas to the Insto system.
+Throughout this documentation the assumption is made that the Insto server is running on the hostname 'http://api.insto.co.uk' using port '3000'.
 
-## 1) Real-time Message Broker 
+You must be registered to use Insto, and can do so here: [www.insto.co.uk](http://www.insto.co.uk/). Full documentation can also be found on the website, along with some code examples.
 
-Insto listens on port 3000 for WebSocket connections.
+## What is Insto for?
 
-When a client connects, it is sent an "identify" request. The client should reply with an "identity" message which contains a userData JSON object that defines the connector's identity e.g. 
-
-```
-{"userId":104,"firstname":"Laura","lastName":"Smith","userType":"user"}
-```
-or 
-```
-{"userType":"wallboard"}
-```
-or anything you like!
-
-The communication between Insto and the client is handled automatically, however the userData must be defined on connection by the application (see Websocket API section of documentation).
-
-The key/value pairs supplied in the userData object can be used by both the REST and Websocket APIs to send messages to individual connected users or groups of users, amongst other things.
-
-## 2) Rest API
-
-An [Express](http://expressjs.com/)-powered, RESTful API is set up to listen on port 3000 by default. The API allows other apps to send messages to Insto. Insto then dispatches the messages to the individual users, groups of users or all connected users in near real-time.
-
-## 3) Websocket API
-
-A Websocket API is also available for performing more complex selections of users using multiple parameters, as well as broadcasting to all users. The Websocket API is currently available via a Javascript library.
-
-## 4) Redis data store
-
-The list of connected users is stored in Redis. Also, outgoing messages are coordinated using Redis pub/sub channels. This allows multiple instances of the Insto worker to be operated together to allow scalability on multi-core processors or even multi-server installations.
-
-### Here is how everything is connected:
-
-![Schematic diagram](https://github.com/MattCollins84/insto/blob/master/schematic.png?raw=true "Insto - Schematic Diagram")
-
-*  Web browser clients make permanent WebSocket connections (using socket.io)
-*  Other applications make transient connections to the API to post messages for distribution
-*  The Insto worker processes subscribe to Redis pubsub channels to receive notifications that individual or broadcast messages are to be dispatched
-*  Redis stores the array of connected users and their attributes
-
-## 5) Web interface
-
-If you visit 'http://insto:3000', you will see Insto's simple web interface which allows you to see a list of the clients that are connected and how they identified themselves. This can be used for debugging.
+Insto is not designed for any particular use case; it is the means for sending real-time messages to groups of connected users. Insto doesn't know anything about the application it is working with, it is merely the messenger. It stores nothing permanently.
 
 ## Websocket API documentation
 
-### The Insto Client object
-The Insto Client object takes up to 4 different parameters:
+### The InstoClient object
+The InstoClient object is used to interact with Insto, create a new instance as shown below:
+```
+<script type="text/javascript" src="http://api.insto.co.uk:3000/lib/client.js"></script>
+<script type="text/javascript">
+  var insto = new InstoClient(API_KEY, userData, userQuery, function(data) {
+    console.log(data);
+  });
+</script>
+```
+
+#### API_KEY (required)
+The API key required to access Insto
 
 #### userData (required)
-This is a Javascript object that describes the user making the connection
+This is a Javascript object that describes the user making the connection, for example:
 
 ```
 var userData = {"name": "Matt", "userId": 5, "userType": "admin"};
@@ -78,23 +51,8 @@ var callback = function(data) {
 }
 ```
 
-#### host (optional - defaults to the domain of the web page creating the connection, with a port of 3000)
-The insto server to connect to.
-
-```
-var host = "http://insto:3000";
-```
-
-
-### Object creation
-And the object is created like so:
-
-```
-var i = new Insto Client(userData, userQuery, callback, host);
-```
-
 ### What are notifications
-Any Insto Client can receive realtime notifications via the Insto Client object. Each time one of these notifications are received, they are passed to the callback function (if it has been supplied).
+Any InstoClient can receive realtime notifications via the InstoClient object. Each time one of these notifications are received, they are passed to the callback function (if it has been supplied).
 
 There are five types of notification:
 
@@ -102,30 +60,31 @@ There are five types of notification:
 * disconnect - received when another Insto Client disconnects from the server and matches the supplied userQuery. Provides this clients userData object.
 * connectedusers - received after connection if any currently connected Insto Clients match the supplied userQuery. Provides an array of matching clients userData objects.
 * notification - received when this Insto Client matches the parameters specified by another client when sending a message. Provides the sent message.
-* query - received as a response from the query Insto Client method (g.query()). Provides an array of other connected users that match the supplied query.
+* query - received as a response from the query Insto Client method (insto.query()). Provides an array of other connected users that match the supplied query.
 
-All notifications return a Javascript object with a notification type stored in the _type property. For example:
+All notifications return a Javascript object with a notification type stored in the _type property, along with the unique ID of the sending client in the _id property. For example:
 
 ```
-{"message":"this is a message","_type":"notification"}
+{"message":"this is a message","_type":"notification","_id": "sdkjfhgsdf-e45"}
 ```
 
-It is important to remember that all Insto notifications of type 'notification' are schema-less, and as such can be in any format as defined by the sender, as long as they are valid Javascript objects. However they will always contain the _type property.
+It is important to remember that all Insto notifications of type 'notification' are schema-less, and as such can be in any format as defined by the sender, as long as they are valid Javascript objects. However they will always contain the _type and _id properties.
 
 #### connect / disconnect notifications
-These types of notification are sent when a Insto Client changes it's connection state. If this client matches a supplied userQuery of another Insto client they will receive a connect/disconnect notification, altering them to this change of state.
+These types of notification are sent when a InstoClient changes it's connection state. If this client matches a supplied userQuery of another Insto client they will receive a connect/disconnect notification, altering them to this change of state.
 
 ```
-{"userId":10,"firstname":"James","lastName":"Robinson","userType":"test","_type":"connect"}
-{"userId":10,"firstname":"James","lastName":"Robinson","userType":"test","_type":"disconnect"}
+{"userId":10,"firstname":"James","lastName":"Robinson","userType":"test","_type":"connect","_id": "sdkjfhgsdf-e45"}
+{"userId":10,"firstname":"James","lastName":"Robinson","userType":"test","_type":"disconnect","_id": "sdkjfhgsdf-e45"}
 ```
 
 #### connectedusers
-If a userQuery is supplied then a connectedusers notification is automatically returned after a connection to the server is made. There will be a 'users' property which contains an array of userData objects for all of the currently connected Insto Clients that match the supplied userQuery.
+If a userQuery is supplied on connection, a connectedusers notification is automatically returned after a connection to the server is made. There will be a 'users' property which contains an array of userData objects for all of the currently connected Insto Clients that match the supplied userQuery.
 
 ```
 {
   "_type":"connectedusers",
+  "_id": "sdkjfhgsdf-e45",
   "users":[
     { "userId":1,
       "firstname":"James",
@@ -152,6 +111,7 @@ This notification type is returned to the same Insto Client that calls the query
 ```
 {
   "_type":"query",
+  "_id": "sdkjfhgsdf-e45"
   "users":[
     { "userId":1,
       "firstname":"James",
@@ -177,15 +137,10 @@ This notification type is returned to the same Insto Client that calls the query
 Supplying a valid userQuery object when creating the Insto Client will allow this client to receive a connect or disconnect notification when any other Insto Client connects or disconnects from the server. The example below shows a Insto Client that is listening for connections/disconnections for all Insto users with a 'userType' of 'sales'.
 
 ```
-<script type="text/javascript" src="http://insto:3000/socket.io/socket.io.js"></script>
-<script type="text/javascript" src="http://insto:3000/lib/client.js"></script>
+<script type="text/javascript" src="http://api.insto.co.uk:3000/lib/client.js"></script>
 <script type="text/javascript">
 
-  //callback function for handling messages received from insto
-  var callback = function(data) {
-    console.log(data);
-  }
-  
+  // get notifications of userType 'sales'
   var userQuery = {
     "userType": "sales"
   };
@@ -198,19 +153,26 @@ Supplying a valid userQuery object when creating the Insto Client will allow thi
                   };
   
   //create new insto object, passing in userData and callback function
-  var i = new Insto Client(userData, userQuery, callback);
+  var i = new InstoClient(API_KEY, userData, userQuery, function(data) {
+    console.log(data);
+  });
   
 </script>
 ```
+## Methods
+These are the methods used to interact with the service
 
-### Insto Client.send( userQuery, message, [sendToSelf] ) - Send a notification to a subset of users
+### InstoClient.send( userQuery, message, [sendToSelf] ) - Send a notification to a subset of users
 
-Parameters
-userQuery   - [required] define the user(s) that this message should be sent to
+**Parameters**
+
+userQuery   - [required] define the user(s) that this notification should be sent to
+
 message     - [required] define the message that should be sent
+
 sendToSelf  - [optional - default: false] should this message be sent to the message sender (only if they match the userQuery)
 
-The Insto Client can send a message to any other connected Insto Client by providing a userQuery. All users who match this query will receive the message. If the sending user matches the userQuery they will not receive the message unless the sendToSelf parameter is defined as true.
+The Insto Client can send a notification to any other connected Insto Client by providing a userQuery. All users who match this query will receive the message. If the sending user matches the userQuery they will not receive the message unless the sendToSelf parameter is defined as true.
 
 A userQuery must be a valid Javascript object, as must the message. If a message is required to go to all connected users, please use the Insto Client.broadcast() method.
 
@@ -248,8 +210,7 @@ var message = {
 The below example shows a simple message being sent to all users that have a 'userType' of 'sales':
 
 ```
-<script type="text/javascript" src="http://insto:3000/socket.io/socket.io.js"></script>
-<script type="text/javascript" src="http://insto:3000/lib/client.js"></script>
+<script type="text/javascript" src="http://api.insto.co.uk:3000/lib/client.js"></script>
 <script type="text/javascript">
 
   //callback function for handling messages received from insto
@@ -265,7 +226,7 @@ The below example shows a simple message being sent to all users that have a 'us
                   };
   
   //create new insto object, passing in userData and callback function
-  var i = new Insto Client(userData, false, callback);
+  var i = new InstoClient(API_KEY, userData, false, callback);
         
   //message query
   var query = {"userType": "sales"};
@@ -280,16 +241,16 @@ The below example shows a simple message being sent to all users that have a 'us
 </script>
 ```
 
-### Insto Client.broadcast( message ) - Send a notification to all users
+### InstoClient.broadcast( message ) - Send a notification to all users
 
-Parameters
+**Parameters**
+
 message     - [required] define the message that should be sent
 
 Use this method to send a message to all connected Insto Clients. The message object obeys the same rules as the Insto Client.send() method.
 
 ```
-<script type="text/javascript" src="http://insto:3000/socket.io/socket.io.js"></script>
-<script type="text/javascript" src="http://insto:3000/lib/client.js"></script>
+<script type="text/javascript" src="http://api.insto.co.uk:3000/lib/client.js"></script>
 <script type="text/javascript">
 
   //callback function for handling messages received from insto
@@ -305,7 +266,7 @@ Use this method to send a message to all connected Insto Clients. The message ob
                   };
   
   //create new insto object, passing in userData and callback function
-  var i = new Insto Client(userData, false, callback);
+  var i = new InstoClient(API_KEY, userData, false, callback);
   
   //create a message object to be sent to all users
   var msg = { "message": "This is an example message" };
@@ -318,10 +279,12 @@ Use this method to send a message to all connected Insto Clients. The message ob
 This would send a message to all users.
 
 ### Insto Client.query( userQuery ) - Find all connected users that match a userQuery
-Parameters
+
+**Parameters**
+
 userQuery   - [required] define the user(s) that this query should return
 
-It is possible to search the connected Insto Clients to see if there are any that match the required subset.
+It is possible to search the connected InstoClients to see if there are any that match the required subset.
 
 This method requires a userQuery object to be passed in.
 
@@ -336,10 +299,9 @@ var query = {
 
 All matching users are returned in a notification of type 'query'.
 
-An example of using Insto Client.query();
+An example of using InstoClient.query();
 
 ```
-<script type="text/javascript" src="http://insto:3000/socket.io/socket.io.js"></script>
 <script type="text/javascript" src="http://insto:3000/lib/client.js"></script>
 <script type="text/javascript">
 
@@ -356,7 +318,7 @@ An example of using Insto Client.query();
                   };
   
   //create new insto object, passing in userData and callback function
-  var i = new Insto Client(userData, false, callback);
+  var i = new InstoClient(API_KEY, userData, false, callback);
   
   //create a message object to be sent to all users
   var query = {
@@ -374,37 +336,37 @@ An example of using Insto Client.query();
 ### Send a notification to all users.
 
 ```
-  curl -i 'http://insto:3000/message/all?param1=a&param2=b'
+  curl -i 'http://api.insto.co.uk:3000/API_KEY/message/all?param1=foo&param2=bar'
 ```
 
 The parameters after the '?' are expressed as a JSON object (shown below) and broadcast to all connected clients.
 
 ```
   {
-    "param1": "a",
-    "param2": "b"
+    "param1": "foo",
+    "param2": "bar"
   }
 ```
 
 ### Send a notification to a sub-set of users
 
 ```
- curl -i 'http://insto:3000/message/to/userType/user?param1=a&param2=b'
+ curl -i 'http://api.insto.co.uk:3000/API_KEY/message/to/userType/user?param1=foo&param2=bar'
 ```
 
 Sends the query parameters to connected clients that have userType='user'. The final two parameters in the URL can be anything you like; they should match the key/values supplied in the identity packet from the connecting WebSocket user e.g.
 
 ```
-curl 'http://insto:3000/message/to/userType/wallboard?dog=1'
-curl 'http://insto:3000/message/to/firstname/Laura?foo=bar'
-curl 'http://insto:3000/message/to/user_id/104?foo=bar'
+curl 'http://api.insto.co.uk:3000/API_KEY/message/to/userType/wallboard?dog=1' // finds where userType = wallboard
+curl 'http://api.insto.co.uk:3000/API_KEY/message/to/firstname/Laura?foo=bar' // finds where firstname = Laura
+curl 'http://api.insto.co.uk:3000/API_KEY/message/to/user_id/104?foo=bar' // finds where user_id = 104
 ```
 
 ### Query connected users
 It is possible to query the connected users and detect who is connected that match a provided query.
 
 ```
-curl 'http://insto:3000/query?userType=web&businessId=501642881088'
+curl 'http://api.insto.co.uk:3000/API_KEY/query?userType=web&businessId=501642881088'
 
 {
   "msg":[
@@ -423,32 +385,4 @@ curl 'http://insto:3000/query?userType=web&businessId=501642881088'
   ],
   "success":true
 }
-```
-
-## What is Insto for?
-
-Insto is not designed for any particular use case; it is the means for sending real-time messages to groups of connected users. Insto doesn't know anything about the application it is working with, it is merely the messenger. It stores nothing permanently as the Redis keys are removed on startup.
-
-## Installation
-
-Insto requires Node.js v_0.6 or above. Once the repository is cloned simply run:
-
-```
-  npm install
-```
-
-to install the Node modules that are required (listed in package.json).
-
-## Running
-
-Insto requires Redis to be running. Then simply run the Insto executable:
-
-```
-  ./insto.js
-```
-
-or if you want to run Insto  on a port other than the default, you can supply the port at the command-line:
-
-```
-  ./insto.js --port 8080
 ```
