@@ -23,7 +23,7 @@ var db = require("./cloudant.js").users;
 
 // send - success
 var restSend = function(res, status, msg) {
-  res.send({ 'msg' : msg, 
+  res.send({ 'data' : msg, 
              'success' : status });
 }
 
