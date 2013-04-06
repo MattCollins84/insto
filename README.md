@@ -54,13 +54,14 @@ var callback = function(data) {
 ### What are notifications
 Any InstoClient can receive realtime notifications via the InstoClient object. Each time one of these notifications are received, they are passed to the callback function (if it has been supplied).
 
-There are five types of notification:
+There are six types of notification:
 
-* connect - received when another Insto Client connects to the server and matches the supplied userQuery. Provides this clients userData object.
-* disconnect - received when another Insto Client disconnects from the server and matches the supplied userQuery. Provides this clients userData object.
-* connectedusers - received after connection if any currently connected Insto Clients match the supplied userQuery. Provides an array of matching clients userData objects.
-* notification - received when this Insto Client matches the parameters specified by another client when sending a message. Provides the sent message.
-* query - received as a response from the query Insto Client method (insto.query()). Provides an array of other connected users that match the supplied query.
+* connected - received when you have successully connected to the Insto server
+* connect - received when another Insto client connects to the server and matches the supplied userQuery. Provides this clients userData object.
+* disconnect - received when another Insto client disconnects from the server and matches the supplied userQuery. Provides this clients userData object.
+* connectedusers - received after connection if any currently connected Insto clients match the supplied userQuery. Provides an array of matching clients userData objects.
+* notification - received when this Insto client matches the parameters specified by another client when sending a message. Provides the sent message.
+* query - received as a response from the query method (insto.query()). Provides an array of other connected users that match the supplied query.
 
 All notifications return a Javascript object with a notification type stored in the _type property, along with the unique ID of the sending client in the _id property. For example:
 
@@ -69,6 +70,16 @@ All notifications return a Javascript object with a notification type stored in 
 ```
 
 It is important to remember that all Insto notifications of type 'notification' are schema-less, and as such can be in any format as defined by the sender, as long as they are valid Javascript objects. However they will always contain the _type and _id properties.
+
+#### connected notifications
+This notification is received when the InstoClient has successully connected to the server. It simply returns the unique _id of this connected InstoClient.
+
+```
+{
+  "_type":"connect",
+  "_id": "sdkjfhgsdf-e45"
+}
+```
 
 #### connect / disconnect notifications
 These types of notification are sent when a InstoClient changes it's connection state. If this client matches a supplied userQuery of another Insto client they will receive a connect/disconnect notification, altering them to this change of state.
@@ -84,22 +95,24 @@ If a userQuery is supplied on connection, a connectedusers notification is autom
 ```
 {
   "_type":"connectedusers",
-  "_id": "sdkjfhgsdf-e45",
   "users":[
     { "userId":1,
       "firstname":"James",
       "lastName":"Robinson",
-      "userType":"sales"
+      "userType":"sales",
+      "_id":"sdfjkgsdf-3435"
     },
     { "userId":2,
       "firstname":"Gregg",
       "lastName":"House",
-      "userType":"sales"
+      "userType":"sales",
+      "_id":"wesdfsdfsdf-234"
     },
     { "userId":3,
       "firstname":"Dave",
       "lastName":"Johnson",
-      "userType":"sales"
+      "userType":"sales",
+      "_id":"cbnmbnmcb9udfg-4569"
     }
   ]
 }
@@ -111,7 +124,6 @@ This notification type is returned to the same Insto Client that calls the query
 ```
 {
   "_type":"query",
-  "_id": "sdkjfhgsdf-e45"
   "users":[
     { "userId":1,
       "firstname":"James",
@@ -369,7 +381,7 @@ It is possible to query the connected users and detect who is connected that mat
 curl 'http://api.insto.co.uk:3000/API_KEY/query?userType=web&businessId=501642881088'
 
 {
-  "msg":[
+  "data":[
     {
       "businessId":"501642881088",
       "url":"http://goat-scoot/England/Cleveland/Stockton-on-Tees/Scoot-Business-DirectoryPOPOP-10108141.html",
