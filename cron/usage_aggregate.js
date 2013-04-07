@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+// change directory to current directory
+process.chdir(__dirname);
+
 // define redis keys and create redis connection for user class
 var redisClient = require("redis").createClient();
 
