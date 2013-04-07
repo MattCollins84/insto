@@ -2,6 +2,7 @@
 
 // change directory to current directory
 process.chdir(__dirname);
+console.log(process.cwd());
 
 // define redis keys and create redis connection for user class
 var redisClient = require("redis").createClient();
