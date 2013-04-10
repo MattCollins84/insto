@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // change directory to current directory
 process.chdir(__dirname);
 console.log(process.cwd());

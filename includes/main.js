@@ -465,6 +465,7 @@ var startup = function(port) {
              */
             syslog.log("Insto: Received send request");
             var sts = (data['_sendToSelf'])?true:socket.id;
+            data['_msg']._id = socket.id;
 
             user.sendMessage(data['_query'], data['_msg'], sts, function() {});
           });
@@ -479,6 +480,7 @@ var startup = function(port) {
              */
             syslog.log("Insto: Received broadcast request");
             
+            data['_msg']._id = socket.id;
             user.sendBroadcast(data['_apiKey'], data['_msg'], function() {});
           });
           
