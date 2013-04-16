@@ -37,12 +37,12 @@ function InstoClient(apiKey, userData, userQuery, options, host) {
   
   // setup callbacks
   var callbacks = {
-  	onConnect: 				((typeof options.onConnect == "function")					?		options.onConnect						:		function(data) {}),
-  	onConnectedUsers: ((typeof options.onConnectedUsers == "function")	?		options.onConnectedUsers		:		function(data) {}),
-  	onNotification: 	((typeof options.onNotification == "function")		?		options.onNotification			:		function(data) {}),
-  	onQuery: 					((typeof options.onQuery == "function")						?		options.onQuery							:		function(data) {}),
-  	onUserConnect: 		((typeof options.onUserConnect == "function")			?		options.onUserConnect				:		function(data) {}),
-  	onUserDisconnect: ((typeof options.onUserDisconnect == "function")	?		options.onUserDisconnect		:		function(data) {})
+  	onConnect: ((typeof options.onConnect == "function") ? options.onConnect : function(data) {}),
+  	onConnectedUsers: ((typeof options.onConnectedUsers == "function") ? options.onConnectedUsers : function(data) {}),
+  	onNotification: ((typeof options.onNotification == "function") ? options.onNotification : function(data) {}),
+  	onQuery: ((typeof options.onQuery == "function") ? options.onQuery : function(data) {}),
+  	onUserConnect: ((typeof options.onUserConnect == "function") ? options.onUserConnect : function(data) {}),
+  	onUserDisconnect: ((typeof options.onUserDisconnect == "function") ? options.onUserDisconnect : function(data) {})
   }
   
   //check we have a host value
