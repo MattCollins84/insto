@@ -63,33 +63,35 @@
       var query1 = { "unit": 1 };
                       
       // define a call back                
-      var callback = function(data) {
+      var callback = {
         
-        if (data._type == "connectedusers") {
+        onConnectedUsers: function(data) {
           $('connectedusers').addClassName('success');
           complete++;
-        }
+        },
         
-        if (data._type == "query") {
+        onQuery: function(data) {
           $('query').addClassName('success');
           complete++;
-        }
+        },
         
-        if (typeof data.test == "string") {
-          $('message').addClassName('success');
-          complete++;
-        }
-        
-        if (typeof data.bcast == "string") {
-          $('broadcast').addClassName('success');
-          complete++;
-        }
-        
-        if (complete == 4) {
-          setTimeout(function() {
-            $('success').removeClassName('hidden');
-          }, 1000);
-        }
+        onNotification: function(data) {
+					if (typeof data.test == "string") {
+						$('message').addClassName('success');
+						complete++;
+					}
+				
+					if (typeof data.bcast == "string") {
+						$('broadcast').addClassName('success');
+						complete++;
+					}
+				
+					if (complete == 4) {
+						setTimeout(function() {
+							$('success').removeClassName('hidden');
+						}, 1000);
+					}
+				}
       }
                       
       //connect to insto
