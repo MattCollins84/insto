@@ -1,7 +1,7 @@
 /*
  *  InstoClient
  */
-function InstoClient(apiKey, userData, userQuery, callback, host) {
+function InstoClient(apiKey, userData, userQuery, options, host) {
   
   /*** Code to async load socket.io library ***/
   this.addEvent = function(elm, evType, fn, useCapture) {
@@ -19,7 +19,8 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
   
     return ret;
   };
-
+	
+	/*** async load ***/
   this.load = function(src, callback) {
     var a = document.createElement('script');
     a.type = 'text/javascript';
@@ -28,6 +29,20 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
     s.parentNode.insertBefore(a, s);
     
     this.addEvent(a, 'load', callback, false);
+  }
+  
+  if (typeof options != "object") {
+  	options = {};
+  }
+  
+  // setup callbacks
+  var callbacks = {
+  	onConnect: 				((typeof options.onConnect == "function")					?		options.onConnect						:		function(data) {}),
+  	onConnectedUsers: ((typeof options.onConnectedUsers == "function")	?		options.onConnectedUsers		:		function(data) {}),
+  	onNotification: 	((typeof options.onNotification == "function")		?		options.onNotification			:		function(data) {}),
+  	onQuery: 					((typeof options.onQuery == "function")						?		options.onQuery							:		function(data) {}),
+  	onUserConnect: 		((typeof options.onUserConnect == "function")			?		options.onUserConnect				:		function(data) {}),
+  	onUserDisconnect: ((typeof options.onUserDisconnect == "function")	?		options.onUserDisconnect		:		function(data) {})
   }
   
   //check we have a host value
@@ -88,7 +103,7 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
 	
 		// listen for connection notification
 		socket.on('connected', function(data) {
-			callback(data);
+			callbacks.onConnect(data);
 			return;
 		});
 		
@@ -101,38 +116,34 @@ function InstoClient(apiKey, userData, userQuery, callback, host) {
 	
 		// listen for incoming messages and send to callback
 		socket.on('notification', function(msg) {
-			msg._type = "notification";
-			callback(msg);
+			callbacks.onNotification(msg);
 		});
 	
 		// listen for incoming connection query matches
 		socket.on('instousersconnected', function(msg) {
 		
 			var obj = new Object;
-			obj._type = "connectedusers"
 			obj.users = msg;
-			callback(obj);
+			callbacks.onConnectedUsers(obj);
 		});
 	
 		// listen for incoming connection query matches
 		socket.on('instoconnect', function(msg) {
-			msg._type = "connect";
-			callback(msg);
+			callbacks.onUserConnect(msg);
 		});
 	
 		// listen for incoming disconnection query matches
 		socket.on('instodisconnect', function(msg) {
-			msg._type = "disconnect";
-			callback(msg);
+			callbacks.onUserDisconnect(msg);
 		});
 	
 		// listen for incoming disconnection query matches
 		socket.on('instoquery', function(msg) {
 		
 			var obj = new Object;
-			obj._type = "query";
 			obj.users = msg;
-			callback(obj);
+			callbacks.onQuery(obj);
+			
 		});
   });
   
