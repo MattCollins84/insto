@@ -73,6 +73,12 @@
         onQuery: function(data) {
           $('query').addClassName('success');
           complete++;
+          
+          if (complete == 4) {
+						setTimeout(function() {
+							$('success').removeClassName('hidden');
+						}, 1000);
+					}
         },
         
         onNotification: function(data) {
