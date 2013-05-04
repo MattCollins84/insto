@@ -91,6 +91,7 @@ function InstoClient(apiKey, userData, userQuery, options, host) {
 		 *  Connect to Socket.IO server
 		 */
 		socket = io.connect(host); //our socket.io object
+		console.log('SOCKET');
 		console.log(socket);
 		/*
 		 *  Handle Socket.IO events
