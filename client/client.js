@@ -95,9 +95,7 @@ function InstoClient(apiKey, userData, userQuery, options, host) {
 		/*
 		 *  Handle Socket.IO events
 		 */
-		
-		setTimeout(function() {
-		
+	
 		// handle identify
 		socket.on('identify', function(data) {
 			socket.emit('identity', { "auth": {"apiKey": apiKey, "hostname": window.location.hostname}, "userData": userData, "userQuery": userQuery });
@@ -147,8 +145,6 @@ function InstoClient(apiKey, userData, userQuery, options, host) {
 			callbacks.onQuery(obj);
 			
 		});
-		
-		}, 3000);
   });
   
   /*
