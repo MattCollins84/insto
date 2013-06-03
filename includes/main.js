@@ -35,7 +35,7 @@ var restNotFound = function(res) {
 
 /*
  *  Method to start up the application
- *  port - the port to listen on
+ *  port - the port to listen on.
  */
 var startup = function(port) {
   
