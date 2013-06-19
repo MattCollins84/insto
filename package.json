@@ -4,14 +4,14 @@
   "description": "Real-time Message Broker",
   "main": "insto.js",
   "dependencies": {
-    "express": ">= 2.5.1",
-    "socket.io": ">= 0.8.7",
-    "redis": ">= 0.7.2",
-    "hiredis": ">=0.1.14",
-    "optimist": ">= 0.3.4",
-    "daemon": ">=0.5.1",
-    "cradle": ">=0.6.4",
-    "moment": ">=1.7.2",
-    "async": ""
+    "express": "3.2.6",
+    "socket.io": "0.9.16",
+    "redis": "0.8.3",
+    "hiredis": "0.1.15",
+    "optimist": "0.5.2",
+    "daemon": "1.1.0",
+    "cradle": "0.6.6",
+    "moment": "2.0.0",
+    "async": "0.2.9"
   }
 }
