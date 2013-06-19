@@ -19,8 +19,13 @@ The InstoClient object is used to interact with Insto, create a new instance as 
 ```
 <script type="text/javascript" src="http://api.insto.co.uk:3000/lib/client.js"></script>
 <script type="text/javascript">
-  var insto = new InstoClient(API_KEY, userData, userQuery, function(data) {
-    console.log(data);
+  var insto = new InstoClient(API_KEY, userData, userQuery, { 
+    onConnect: function(data) { ... },
+    onConnectedUsers: function(data) { ... },
+    onNotification: function(data) { ... },
+    onQuery: function(data) { ... },
+    onUserConnect: function(data) { ... },
+    onUserDisconnect: function(data) { ... }
   });
 </script>
 ```
@@ -42,12 +47,17 @@ This is a Javascript object that describes the type of users that this user want
 var userQuery = {"userType": "sales"};
 ```
 
-#### callback (optional - default does nothing)
-This is the function that is called when ANY notification is received
+#### callbacks (optional - default does nothing)
+This is a Javascript object that defines the numerous callback functions that are fired on events occuring within the system.
 
 ```
-var callback = function(data) {
-  console.log(data);
+{ 
+  onConnect: function(data) { ... },
+  onConnectedUsers: function(data) { ... },
+  onNotification: function(data) { ... },
+  onQuery: function(data) { ... },
+  onUserConnect: function(data) { ... },
+  onUserDisconnect: function(data) { ... }
 }
 ```
 
@@ -56,45 +66,43 @@ Any InstoClient can receive realtime notifications via the InstoClient object. E
 
 There are six types of notification:
 
-* connected - received when you have successully connected to the Insto server
-* connect - received when another Insto client connects to the server and matches the supplied userQuery. Provides this clients userData object.
-* disconnect - received when another Insto client disconnects from the server and matches the supplied userQuery. Provides this clients userData object.
-* connectedusers - received after connection if any currently connected Insto clients match the supplied userQuery. Provides an array of matching clients userData objects.
-* notification - received when this Insto client matches the parameters specified by another client when sending a message. Provides the sent message.
-* query - received as a response from the query method (insto.query()). Provides an array of other connected users that match the supplied query.
+* onConnect - received when you have successully connected to the Insto server
+* onUserConnect - received when another Insto client connects to the server and matches the supplied userQuery. Provides this clients userData object.
+* onUserDisconnect - received when another Insto client disconnects from the server and matches the supplied userQuery. Provides this clients userData object.
+* onConnectedUsers - received after connection if any currently connected Insto clients match the supplied userQuery. Provides an array of matching clients userData objects.
+* onNotification - received when this Insto client matches the parameters specified by another client when sending a message. Provides the sent message.
+* onQuery - received as a response from the query method (insto.query()). Provides an array of other connected users that match the supplied query.
 
-All notifications return a Javascript object with a notification type stored in the _type property, along with the unique ID of the sending client in the _id property. For example:
+All notifications return a Javascript object with the unique ID of the sending client in the _id property where appropriate. For example:
 
 ```
-{"message":"this is a message","_type":"notification","_id": "sdkjfhgsdf-e45"}
+{"message":"this is a message","_id": "sdkjfhgsdf-e45"}
 ```
 
-It is important to remember that all Insto notifications of type 'notification' are schema-less, and as such can be in any format as defined by the sender, as long as they are valid Javascript objects. However they will always contain the _type and _id properties.
+It is important to remember that all Insto notifications returned by the onNotification callback are schema-less, and as such can be in any format as defined by the sender, as long as they are valid Javascript objects. However they will always contain the _id property.
 
-#### connected notifications
+#### onConnect notifications
 This notification is received when the InstoClient has successully connected to the server. It simply returns the unique _id of this connected InstoClient.
 
 ```
 {
-  "_type":"connect",
   "_id": "sdkjfhgsdf-e45"
 }
 ```
 
-#### connect / disconnect notifications
+#### onUserConnect / onUserDisconnect notifications
 These types of notification are sent when a InstoClient changes it's connection state. If this client matches a supplied userQuery of another Insto client they will receive a connect/disconnect notification, altering them to this change of state.
 
 ```
-{"userId":10,"firstname":"James","lastName":"Robinson","userType":"test","_type":"connect","_id": "sdkjfhgsdf-e45"}
-{"userId":10,"firstname":"James","lastName":"Robinson","userType":"test","_type":"disconnect","_id": "sdkjfhgsdf-e45"}
+{"userId":10,"firstname":"James","lastName":"Robinson","userType":"test","_id": "sdkjfhgsdf-e45"}
+{"userId":10,"firstname":"James","lastName":"Robinson","userType":"test","_id": "sdkjfhgsdf-e45"}
 ```
 
-#### connectedusers
+#### onConnectedUsers
 If a userQuery is supplied on connection, a connectedusers notification is automatically returned after a connection to the server is made. There will be a 'users' property which contains an array of userData objects for all of the currently connected Insto Clients that match the supplied userQuery.
 
 ```
 {
-  "_type":"connectedusers",
   "users":[
     { "userId":1,
       "firstname":"James",
@@ -118,12 +126,11 @@ If a userQuery is supplied on connection, a connectedusers notification is autom
 }
 ```
 
-#### query
+#### onQuery
 This notification type is returned to the same Insto Client that calls the query method. It returns with an array of users that match the supplied query, very much like the 'connectedusers' notification.
 
 ```
 {
-  "_type":"query",
   "users":[
     { "userId":1,
       "firstname":"James",
@@ -165,8 +172,13 @@ Supplying a valid userQuery object when creating the Insto Client will allow thi
                   };
   
   //create new insto object, passing in userData and callback function
-  var i = new InstoClient(API_KEY, userData, userQuery, function(data) {
-    console.log(data);
+  var i = new InstoClient(API_KEY, userData, userQuery, { 
+    onConnect: function(data) { ... },
+    onConnectedUsers: function(data) { ... },
+    onNotification: function(data) { ... },
+    onQuery: function(data) { ... },
+    onUserConnect: function(data) { ... },
+    onUserDisconnect: function(data) { ... }
   });
   
 </script>
@@ -225,11 +237,6 @@ The below example shows a simple message being sent to all users that have a 'us
 <script type="text/javascript" src="http://api.insto.co.uk:3000/lib/client.js"></script>
 <script type="text/javascript">
 
-  //callback function for handling messages received from insto
-  var callback = function(data) {
-    console.log(data);
-  }
-  
   //sample user object
   var userData = {  'userId': 5, 
                     'firstname': 'Bob', 
@@ -238,7 +245,14 @@ The below example shows a simple message being sent to all users that have a 'us
                   };
   
   //create new insto object, passing in userData and callback function
-  var i = new InstoClient(API_KEY, userData, false, callback);
+  var i = new InstoClient(API_KEY, userData, false, { 
+    onConnect: function(data) { ... },
+    onConnectedUsers: function(data) { ... },
+    onNotification: function(data) { ... },
+    onQuery: function(data) { ... },
+    onUserConnect: function(data) { ... },
+    onUserDisconnect: function(data) { ... }
+  });
         
   //message query
   var query = {"userType": "sales"};
@@ -264,11 +278,6 @@ Use this method to send a message to all connected Insto Clients. The message ob
 ```
 <script type="text/javascript" src="http://api.insto.co.uk:3000/lib/client.js"></script>
 <script type="text/javascript">
-
-  //callback function for handling messages received from insto
-  var callback = function(data) {
-    console.log(data);
-  }
   
   //sample user object
   var userData = {  'userId': 5, 
@@ -278,7 +287,14 @@ Use this method to send a message to all connected Insto Clients. The message ob
                   };
   
   //create new insto object, passing in userData and callback function
-  var i = new InstoClient(API_KEY, userData, false, callback);
+  var i = new InstoClient(API_KEY, userData, false, { 
+    onConnect: function(data) { ... },
+    onConnectedUsers: function(data) { ... },
+    onNotification: function(data) { ... },
+    onQuery: function(data) { ... },
+    onUserConnect: function(data) { ... },
+    onUserDisconnect: function(data) { ... }
+  });
   
   //create a message object to be sent to all users
   var msg = { "message": "This is an example message" };
@@ -316,11 +332,6 @@ An example of using InstoClient.query();
 ```
 <script type="text/javascript" src="http://insto:3000/lib/client.js"></script>
 <script type="text/javascript">
-
-  //callback function for handling messages received from insto
-  var callback = function(data) {
-    console.log(data);
-  }
   
   //sample user object
   var userData = {  'userId': 5, 
@@ -330,7 +341,14 @@ An example of using InstoClient.query();
                   };
   
   //create new insto object, passing in userData and callback function
-  var i = new InstoClient(API_KEY, userData, false, callback);
+  var i = new InstoClient(API_KEY, userData, false, { 
+    onConnect: function(data) { ... },
+    onConnectedUsers: function(data) { ... },
+    onNotification: function(data) { ... },
+    onQuery: function(data) { ... },
+    onUserConnect: function(data) { ... },
+    onUserDisconnect: function(data) { ... }
+  });
   
   //create a message object to be sent to all users
   var query = {
