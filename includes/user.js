@@ -8,7 +8,7 @@ var redisApiHash = 'instoApiHash';
 var redisApiUsers = 'instoApiUsers';
 var redisApiUsage = 'instoApiUsage';
 
-var syslog = require('./includes/syslog.js');
+var syslog = require('./syslog.js');
 
 var db =require("./cloudant.js").users;
 
@@ -132,7 +132,8 @@ var calculateUserQueryMatch = function(query, user) {
   
   for (key in query) {
     
-    if (key.substring(0, 1) == "_") {
+    // skip special _ prefix properties, except _id
+    if (key.substring(0, 1) == "_" && key != '_id') {
       continue;
     }
     

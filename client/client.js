@@ -221,4 +221,9 @@ function InstoClient(apiKey, userData, userQuery, options, host) {
     
   }
   
+  // get unique socket id
+  this.getSocketId = function() {
+  	return socket.socket.sessionid;
+  }
+  
 }

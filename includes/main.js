@@ -32,6 +32,13 @@ var restNotFound = function(res) {
   res.send( {'msg' : "Not Found" }, 404);
 }
 
+/*
+   * REDIS
+   * redisPubSub  - Redis client for pub/sub
+   * redisData    - Redis client for read/write data
+   */
+var redisPubSub = require("redis").createClient();
+var redisData = require("redis").createClient();
 
 /*
  *  Method to start up the application
@@ -110,12 +117,17 @@ var startup = function(port) {
    */
   api.get('/user/create', function(req, res){
     
-    // use broadcast to send to all sockets
+    // register a new user
     user.createApiUser(req.query, function(err, user) { 
       if (err) {
         restSend(res, false, err);
       } else {
+      	
+      	// subscribe to api user broadcast channel
+        redisPubSub.subscribe('bcast-'+user.apikey);
+        
         restSend(res, true, user);
+        
       }
     });
   });
@@ -213,13 +225,7 @@ var startup = function(port) {
 
   });
   
-  /*
-   * REDIS
-   * redisPubSub  - Redis client for pub/sub
-   * redisData    - Redis client for read/write data
-   */
-  redisPubSub = require("redis").createClient();
-  redisData = require("redis").createClient();
+  
   
   // log any redis errors
   redisPubSub.on("error", function (err) {
@@ -229,12 +235,6 @@ var startup = function(port) {
   redisData.on("error", function (err) {
     syslog.log("Redis Data Error " + err);
   });
-
-  // Automatically listen to Pub/Sub channel
-  /*redisPubSub.on("connect", function(err) {
-    syslog.log("Subscribing to broadcast channel");
-    redisPubSub.subscribe(user.redisBroadcastChannel);
-  });*/
   
   // load all API users
   db.all({include_docs: true}, function(err, docs) {
