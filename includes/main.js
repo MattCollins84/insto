@@ -59,14 +59,15 @@ var startup = function(port, protocol) {
   var http = require('http');
   var https = require('https');
   
-  // options for SSL
-  var options = {
-    key: fs.readFileSync('./client.key'),
-    cert: fs.readFileSync('./client.crt'),
-    requestCert: true
-  }
-  
   if (protocol == 'https') {
+  
+    // options for SSL
+    var options = {
+      key: fs.readFileSync('./client.key'),
+      cert: fs.readFileSync('./client.crt'),
+      requestCert: true
+    }
+  
     var server = https.createServer(options, api);
   } else {
     var server = http.createServer(api);
