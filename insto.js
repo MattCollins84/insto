@@ -12,7 +12,7 @@ var argv = require('optimist').argv;
 
 // set the default port
 var port = 3000;
-
+var protocol = 'http';
 // define the starting number of connection attempts as a global variable
 var conAttempt = 1;
 
@@ -31,6 +31,11 @@ if(argv.port) {
   port = argv.port;  
 } else if( argv.p) {
   port = argv.p;
+}
+
+// protocol mode
+if (argv.protocol) {
+  protocol = argv.protocol;
 }
 
 // validation to check that the supplied port is a number
@@ -71,4 +76,4 @@ redisClient.on("connect", function (err) {
 });
 
 // start the main application, passing in the port
-main.startup(port);
+main.startup(port, protocol);

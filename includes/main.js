@@ -44,7 +44,7 @@ var redisData = require("redis").createClient();
  *  Method to start up the application
  *  port - the port to listen on.
  */
-var startup = function(port) {
+var startup = function(port, protocol) {
   
   /*
    *  RESTful API
@@ -57,7 +57,20 @@ var startup = function(port) {
   
   // Create HTTP server from Express application
   var http = require('http');
-  var server = http.createServer(api);
+  var https = require('https');
+  
+  // options for SSL
+  var options = {
+    key: fs.readFileSync('./client.key'),
+    cert: fs.readFileSync('./client.crt'),
+    requestCert: true
+  }
+  
+  if (protocol == 'https') {
+    var server = https.createServer(options, api);
+  } else {
+    var server = http.createServer(api);
+  }
   
   // listen for connections via the supplied port
   var application = api.listen(port)
