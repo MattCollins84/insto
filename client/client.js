@@ -47,7 +47,7 @@ function InstoClient(apiKey, userData, userQuery, options, host) {
   
   //check we have a host value
   if (typeof host == "undefined") {
-    host = "http://api.insto.co.uk:3000";
+    host = "https://api.insto.co.uk:3000";
   }
   
   //check we have a callback
