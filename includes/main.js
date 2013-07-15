@@ -67,8 +67,8 @@ var startup = function(port, protocol) {
     // options for SSL
     var options = {
       key: fs.readFileSync('./includes/private.key').toString(),
-      ca: [fs.readFileSync('./includes/additional.crt').toString()],
-      cert: fs.readFileSync('./includes/public.crt').toString()
+      ca: [fs.readFileSync('./includes/additional.pem').toString()],
+      cert: fs.readFileSync('./includes/public.pem').toString()
     }
     
     var credentials = crypto.createCredentials(options);
