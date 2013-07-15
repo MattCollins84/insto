@@ -71,10 +71,8 @@ var startup = function(port, protocol) {
       cert: fs.readFileSync('./includes/public.pem').toString()
     }
     
-    var credentials = crypto.createCredentials(options);
-    console.log(credentials);
-    
     var server = https.createServer(options, api);
+    console.log(server);
   } else {
     var server = http.createServer(api);
   }
