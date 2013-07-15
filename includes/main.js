@@ -63,11 +63,12 @@ var startup = function(port, protocol) {
   
     // options for SSL
     var options = {
-      key: fs.readFileSync('./client.key'),
-      cert: fs.readFileSync('./client.crt'),
-      requestCert: true
+      key: fs.readFileSync('./includes/private.key').toString(),
+      ca: [fs.readFileSync('./includes/additional.crt').toString()],
+      cert: fs.readFileSync('./includes/public.crt').toString()
     }
-  
+    console.log(options);
+    
     var server = https.createServer(options, api);
   } else {
     var server = http.createServer(api);
