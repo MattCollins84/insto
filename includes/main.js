@@ -59,8 +59,6 @@ var startup = function(port, protocol) {
   var api = express();
   
   // Create HTTP server from Express application
-  var http = require('http');
-  var https = require('https');
   
   if (protocol == 'https') {
   
@@ -71,14 +69,11 @@ var startup = function(port, protocol) {
       cert: fs.readFileSync('./includes/public.pem').toString()
     }
     
-    var server = https.createServer(options, api);
-    console.log(server);
+    var server = require('https').createServer(options, api) 
+
   } else {
-    var server = http.createServer(api);
+    var server = require('http').createServer(api) 
   }
-  
-  // listen for connections via the supplied port
-  var application = api.listen(port)
   
   /*
    *  Render out connected users
@@ -343,7 +338,7 @@ var startup = function(port, protocol) {
    */
    
    // startup socket.io
-  io = require('socket.io').listen(application);
+  io = require('socket.io').listen(server);
   
   /*
    *  CONNECTION
@@ -610,7 +605,8 @@ var startup = function(port, protocol) {
 
   });
   
-    
+  
+  server.listen(port);
   
   
   
