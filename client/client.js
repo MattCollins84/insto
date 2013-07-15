@@ -90,7 +90,7 @@ function InstoClient(apiKey, userData, userQuery, options, host) {
 		/*
 		 *  Connect to Socket.IO server
 		 */
-		socket = io.connect(host); //our socket.io object
+		socket = io.connect(host, {secure: true}); //our socket.io object
 	
 		/*
 		 *  Handle Socket.IO events
