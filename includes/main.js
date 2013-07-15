@@ -13,6 +13,9 @@ var syslog = require('./syslog.js');
 // file system module to access system commands
 var fs = require('fs');
 
+// crypto
+var crypto = require('crypto');
+
 // couch DB users collection
 var db = require("./cloudant.js").users;
 
@@ -67,7 +70,9 @@ var startup = function(port, protocol) {
       ca: [fs.readFileSync('./includes/additional.crt').toString()],
       cert: fs.readFileSync('./includes/public.crt').toString()
     }
-    console.log(options);
+    
+    var credentials = crypto.createCredentials(options);
+    console.log(credentials);
     
     var server = https.createServer(options, api);
   } else {
