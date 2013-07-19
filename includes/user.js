@@ -288,6 +288,9 @@ var createApiUser = function(user, callback) {
     //remove un-needed prefixes from hostname
     user.hostname = user.hostname.replace("http://", "").replace("https://", "").replace("www.", "");    
     
+    //remove un-needed prefixes from development_hostname
+    user.development_hostname = user.development_hostname.replace("http://", "").replace("https://", "").replace("www.", "");
+    
     // generate api key
     var d = new Date;
     var t = d.getTime();
@@ -346,6 +349,59 @@ var createApiUser = function(user, callback) {
   }
 }
 
+var updateApiUser = function(user, callback) {
+  
+  console.log('UPDATING USER', user);
+  
+  var messages = [];
+  
+  if (typeof user.email != 'string' || !user.email) {
+    messages.push("You must supply an email address");
+  }
+  
+  if (typeof user.name != 'string' || !user.name) {
+    messages.push("You must supply a name");
+  }
+  
+  if (typeof user.password != 'string' || !user.password) {
+    messages.push("You must supply a password");
+  }
+  
+  if (typeof user.hostname != 'string' || !user.hostname) {
+    messages.push("You must supply a hostname");
+  }
+  
+  if (messages.length == 0) {
+    
+    //remove un-needed prefixes from hostname
+    user.hostname = user.hostname.replace("http://", "").replace("https://", "").replace("www.", "");
+    
+    //remove un-needed prefixes from development_hostname
+    user.development_hostname = user.development_hostname.replace("http://", "").replace("https://", "").replace("www.", "");    
+    
+    
+          
+    db.save(user, function(err, res) {
+    
+      if (err) {
+        callback(err, null);
+      } else {
+
+        delete user._rev;
+        redisClient.hset(redisApiHash, user._id, JSON.stringify(user) );
+      
+        callback(null, {"user": user});
+      }
+    });
+
+    
+  }
+  
+  else {
+    callback(messages, null);
+  }
+}
+
 module.exports = {
   redisUserHash: redisUserHash,
   redisBroadcastChannel: redisBroadcastChannel,
@@ -363,6 +419,7 @@ module.exports = {
   stats: stats,
   redisApiHash: redisApiHash,
   createApiUser: createApiUser,
+  updateApiUser: updateApiUser,
   redisApiUsers: redisApiUsers,
   redisApiUsage: redisApiUsage
 }

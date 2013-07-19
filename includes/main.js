@@ -146,6 +146,22 @@ var startup = function(port, protocol) {
   });
   
   /*
+   *  Update API user
+   *  Update an existing API user and return the api key
+   */
+  api.get('/user/update', function(req, res){
+    
+    // register a new user
+    user.updateApiUser(req.query, function(err, user) { 
+      if (err) {
+        restSend(res, false, err);
+      } else {
+      	restSend(res, true, user);
+      }
+    });
+  });
+  
+  /*
    *  TEST
    *  Perform tests to make sure everything is a-ok
    */
