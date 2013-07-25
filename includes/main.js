@@ -401,7 +401,7 @@ var startup = function(port, protocol) {
            *  SETUP the newly connected user
            */
           
-          socket.emit('connected', {"_type": "connected", _id: socket.id});
+          socket.emit('connected', {_id: socket.id});
           
           // subscribe to this users pubsub channel in redis
           redisPubSub.subscribe(socket.id);
