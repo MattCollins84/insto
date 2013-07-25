@@ -390,7 +390,7 @@ var startup = function(port, protocol) {
         }
         
         // check we have the correct hostname for the key
-        else if (apiUser.hostname != identity.auth.hostname && apiUser.development_hostname != identity.auth.hostname) {
+        else if (apiUser.hostname != identity.auth.hostname && apiUser.development_hostname != identity.auth.hostname && identity.auth.hostname != '_nodejs') {
           socket.emit('api-fail', {"msg": "Invalid API key for this host."});
         }
         
