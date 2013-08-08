@@ -46,8 +46,10 @@ function InstoClient(apiKey, userData, userQuery, options, host) {
   }
   
   //check we have a host value
+  var secure = false;
   if (typeof host == "undefined") {
     host = "https://api.insto.co.uk:3000";
+    secure = true;
   }
   
   //check we have a callback
@@ -90,7 +92,7 @@ function InstoClient(apiKey, userData, userQuery, options, host) {
 		/*
 		 *  Connect to Socket.IO server
 		 */
-		socket = io.connect(host, {secure: true}); //our socket.io object
+		socket = io.connect(host, {secure: secure}); //our socket.io object
 	
 		/*
 		 *  Handle Socket.IO events
